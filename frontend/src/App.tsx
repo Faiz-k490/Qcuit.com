@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CircuitState, DraggingGate, GateInstance, SimulationResult } from './types';
 import { GatePalette } from './components/GatePalette';
 import { CircuitGrid } from './components/CircuitGrid';
+import { OutputDisplay } from './components/OutputDisplay';
 
 // Define the initial state for the circuit
 const initialState: CircuitState = {
@@ -52,6 +53,7 @@ function App() {
   const [circuitState, setCircuitState] = useState<CircuitState>(initialState);
   const [results, setResults] = useState<SimulationResult | null>(null);
   const [activeDragItem, setActiveDragItem] = useState<DraggingGate | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Setup D&D sensors
   const sensors = useSensors(
@@ -63,6 +65,7 @@ function App() {
     })
   );
 
+  // --- D&D Handlers ---
   // --- D&D Handlers ---
   function handleDragStart(event: DragStartEvent) {
     const data = event.active.data.current;
@@ -199,10 +202,11 @@ function App() {
               </Panel>
               <PanelResizeHandle />
               <Panel defaultSize={35} minSize={20}>
-                <Paper p="md" style={{ height: '100%' }}>
-                  <Text>Probabilities (Panel 2b)</Text>
-                  {/* We will add OutputDisplay (Histogram) here */}
-                </Paper>
+                {/* --- UPDATE PANEL 2b --- */}
+                <OutputDisplay
+                  results={results}
+                  view="histogram"
+                />
               </Panel>
             </PanelGroup>
           </Panel>
@@ -210,15 +214,12 @@ function App() {
 
           {/* Panel 3: Code Output */}
           <Panel defaultSize={25} minSize={20}>
-            <Paper p="md" style={{ height: '100%', overflow: 'auto' }}>
-              <Text>Generated Code (Panel 3)</Text>
-              {results && (
-                <pre style={{ overflow: 'auto' }}>
-                  {JSON.stringify(results, null, 2)}
-                </pre>
-              )}
-              {/* We will add OutputDisplay (Code) here */}
-            </Paper>
+            {/* --- UPDATE PANEL 3 --- */}
+            <OutputDisplay
+              results={results}
+              view="code"
+              validationErrors={validationErrors}
+            />
           </Panel>
 
         </PanelGroup>
