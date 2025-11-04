@@ -1,30 +1,33 @@
 // In frontend/src/components/DroppableSlot.tsx
 import { useDroppable } from '@dnd-kit/core';
-import { Box } from '@mantine/core';
+import { SLOT_SIZE, SLOT_PADDING } from '../gridConstants';
 
 export function DroppableSlot({
   id,
+  x,
+  y,
   onSlotClick,
 }: {
   id: string;
+  x: number;
+  y: number;
   onSlotClick: (id: string) => void;
 }) {
-  const { isOver, setNodeRef } = useDroppable({
-    id: id,
-  });
+  const { isOver, setNodeRef } = useDroppable({ id: id });
 
   return (
-    <Box
-      ref={setNodeRef}
+    <rect
+      ref={setNodeRef as any}
       onClick={() => onSlotClick(id)}
-      style={{
-        width: '100%',
-        height: 40,
-        border: '1px dashed #444',
-        backgroundColor: isOver ? '#333' : 'transparent',
-        borderRadius: 4,
-        cursor: 'pointer',
-      }}
+      x={x + SLOT_PADDING}
+      y={y + SLOT_PADDING}
+      width={SLOT_SIZE - SLOT_PADDING * 2}
+      height={SLOT_SIZE - SLOT_PADDING * 2}
+      fill={isOver ? '#333' : 'transparent'}
+      stroke="#444"
+      strokeDasharray="2 2"
+      rx={4}
+      style={{ cursor: 'pointer' }}
     />
   );
 }
