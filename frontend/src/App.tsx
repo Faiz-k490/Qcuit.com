@@ -195,12 +195,15 @@ function App() {
           // Start the multi-step placement
           setPendingGate({
             gateType: gateType,
-            control: qubit, // For CNOT, this is the control. For M, this is the qubit.
+            controls: [qubit], // For M, this stores the qubit; for CCNOT this is first control
             timestep: timestep,
           });
+          const message = gateType === 'CCNOT'
+            ? 'Click a second control slot to continue.'
+            : 'Click a target slot in the same timestep to complete the gate.';
           notifications.show({
             title: `${gateType} Gate Started`,
-            message: `Click a target slot in the same timestep to complete the gate.`,
+            message,
             color: 'blue',
           });
         }
@@ -210,14 +213,13 @@ function App() {
 
   // --- Slot Click Handler ---
   function onSlotClick(slotId: string) {
-    // Do nothing if no gate is pending
     if (!pendingGate) return;
 
-    // Parse the clicked slot ID
     const slotMatch = slotId.match(/slot-([qc])(\d+)-t(\d+)/);
-    
+    const { gateType, controls, timestep } = pendingGate;
+
     // Cancel if invalid slot or wrong timestep
-    if (!slotMatch || parseInt(slotMatch[3], 10) !== pendingGate.timestep) {
+    if (!slotMatch || parseInt(slotMatch[3], 10) !== timestep) {
       setPendingGate(null);
       notifications.show({
         title: 'Gate Canceled',
@@ -227,47 +229,61 @@ function App() {
       return;
     }
 
-    const [, type, index_str, t_str] = slotMatch;
+    const [, type, index_str] = slotMatch;
     const index = parseInt(index_str, 10);
-    const timestep = parseInt(t_str, 10);
 
-    // --- Handle Multi-Qubit Gate Completion ---
-    if (['CNOT', 'CZ', 'SWAP', 'CCNOT'].includes(pendingGate.gateType)) {
-      if (type === 'q' && index !== pendingGate.control) {
-        // Valid target qubit
-        const newGate: MultiQubitGateInstance = {
-          id: uuidv4(),
-          gateType: pendingGate.gateType,
-          timestep: pendingGate.timestep,
-          controls: [pendingGate.control], // TODO: Expand for CCNOT
-          targets: [index],
-        };
-
-        setCircuitState(prev => ({
-          ...prev,
-          multiQubitGates: [...prev.multiQubitGates, newGate],
-        }));
-        setPendingGate(null); // Finish
-      }
-    }
-
-    // --- Handle Measurement Gate Completion ---
-    if (pendingGate.gateType === 'M') {
+    // Measurement flow
+    if (gateType === 'M') {
       if (type === 'c') {
-        // Valid classical bit target
         const newMeasurement: Measurement = {
           id: uuidv4(),
           gateType: 'MEASUREMENT',
-          qubit: pendingGate.control, // 'control' was the qubit for M
+          qubit: controls[0],
           classicalBit: index,
-          timestep: pendingGate.timestep,
+          timestep,
         };
-
         setCircuitState(prev => ({
           ...prev,
           measurements: [...prev.measurements, newMeasurement],
         }));
-        setPendingGate(null); // Finish
+        setPendingGate(null);
+      }
+      return;
+    }
+
+    // Multi-qubit flow
+    if (type === 'q') {
+      if (controls.includes(index)) {
+        // clicked on an existing control; ignore
+        return;
+      }
+
+      if (gateType === 'CCNOT' && controls.length === 1) {
+        // Second control selection
+        setPendingGate({ ...pendingGate, controls: [controls[0], index] });
+        notifications.show({
+          title: 'CCNOT Control 2 Added',
+          message: 'Click a target slot to complete the gate.',
+          color: 'blue',
+        });
+        return;
+      }
+
+      const expectedControls = gateType === 'CCNOT' ? 2 : 1;
+      if (controls.length === expectedControls) {
+        const targets = gateType === 'SWAP' ? [controls[0], index] : [index];
+        const newGate: MultiQubitGateInstance = {
+          id: uuidv4(),
+          gateType,
+          timestep,
+          controls: [...controls],
+          targets,
+        };
+        setCircuitState(prev => ({
+          ...prev,
+          multiQubitGates: [...prev.multiQubitGates, newGate],
+        }));
+        setPendingGate(null);
       }
     }
   }
@@ -311,19 +327,36 @@ function App() {
   // --- SHARE FUNCTION ---
   function getShareableLink() {
     try {
+      // 1. Serialize and Encode
       const stateString = JSON.stringify(circuitState);
       const base64State = btoa(stateString);
 
+      // 2. Create the new URL
       const url = new URL(window.location.href);
       url.search = '';
       url.searchParams.set('circuit', base64State);
 
-      navigator.clipboard.writeText(url.toString());
-      notifications.show({
-        title: 'Link Copied!',
-        message: 'Your circuit is copied to the clipboard.',
-        color: 'blue',
-      });
+      // 3. Update the URL bar (this always works)
+      window.history.pushState({}, '', url.toString());
+
+      // 4. Try to copy to clipboard (may fail on non-HTTPS)
+      navigator.clipboard
+        .writeText(url.toString())
+        .then(() => {
+          notifications.show({
+            title: 'Link Copied!',
+            message: 'Your circuit is copied to the clipboard.',
+            color: 'blue',
+          });
+        })
+        .catch((err) => {
+          console.warn('Clipboard write failed. URL was updated in bar.', err);
+          notifications.show({
+            title: 'URL Ready!',
+            message: 'Link updated in your address bar. (Copying failed on non-HTTPS page).',
+            color: 'yellow',
+          });
+        });
     } catch (error) {
       console.error('Failed to create shareable link:', error);
       notifications.show({

@@ -42,7 +42,7 @@ export interface DraggingGate {
 // Type for pending multi-qubit gates
 export interface PendingGate {
   gateType: string;
-  control: number;
+  controls: number[];
   timestep: number;
 }
 

@@ -47,58 +47,54 @@ function SvgGate({ gate, x, y }: { gate: GateInstance; x: number; y: number }) {
 // SVG component to render connecting line for multi-qubit gates
 function SvgMultiGateLine({ gate, x }: { gate: MultiQubitGateInstance; x: number }) {
   const allQubits = [...gate.controls, ...gate.targets].sort((a, b) => a - b);
-  const minQubit = allQubits[0];
-  const maxQubit = allQubits[allQubits.length - 1];
-
+  const yStart = allQubits[0] * SLOT_SIZE + SLOT_CENTER;
+  const yEnd = allQubits[allQubits.length - 1] * SLOT_SIZE + SLOT_CENTER;
   const lineX = x + SLOT_CENTER;
-  const y1 = minQubit * SLOT_SIZE + SLOT_CENTER;
-  const y2 = maxQubit * SLOT_SIZE + SLOT_CENTER;
 
   return (
     <g style={{ pointerEvents: 'none' }}>
       {/* Vertical connecting line */}
-      <line x1={lineX} y1={y1} x2={lineX} y2={y2} stroke="#888" strokeWidth={2} />
+      <line x1={lineX} y1={yStart} x2={lineX} y2={yEnd} stroke="#5599ff" strokeWidth={2} />
 
-      {/* Control dots */}
-      {gate.controls.map((q, idx) => (
+      {/* Control circles */}
+      {gate.controls.map((q) => (
         <circle
-          key={`control-${idx}`}
+          key={`c-${gate.id}-${q}`}
           cx={lineX}
           cy={q * SLOT_SIZE + SLOT_CENTER}
           r={CONTROL_RADIUS}
-          fill="white"
+          fill="#5599ff"
         />
       ))}
 
-      {/* Target boxes */}
-      {gate.targets.map((q, idx) => {
-        const targetX = x + (SLOT_SIZE - GATE_SIZE) / 2;
-        const targetY = q * SLOT_SIZE + (SLOT_SIZE - GATE_SIZE) / 2;
-        return (
-          <g key={`target-${idx}`}>
-            <rect
-              x={targetX}
-              y={targetY}
-              width={GATE_SIZE}
-              height={GATE_SIZE}
-              fill="#3e3e3e"
-              stroke="#888"
-              strokeWidth={1}
-              rx={GATE_RADIUS}
-            />
-            <text
-              x={targetX + GATE_SIZE / 2}
-              y={targetY + GATE_SIZE / 2}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fill="white"
-              fontSize={14}
-              fontWeight="bold"
-            >
-              {gate.gateType === 'CNOT' ? 'X' : gate.gateType === 'CZ' ? 'Z' : gate.gateType}
-            </text>
-          </g>
-        );
+      {/* Target symbols */}
+      {gate.targets.map((q) => {
+        const y = q * SLOT_SIZE + SLOT_CENTER;
+        if (gate.gateType === 'CNOT' || gate.gateType === 'CCNOT') {
+          // Circle-plus target
+          return (
+            <g key={`t-${gate.id}-${q}`} transform={`translate(${lineX}, ${y})`}>
+              <circle r={CONTROL_RADIUS * 2} fill="#5599ff" stroke="none" />
+              <line x1={-10} y1={0} x2={10} y2={0} stroke="white" strokeWidth={3} />
+              <line x1={0} y1={-10} x2={0} y2={10} stroke="white" strokeWidth={3} />
+            </g>
+          );
+        }
+        if (gate.gateType === 'CZ') {
+          // Solid dot
+          return <circle key={`t-${gate.id}-${q}`} cx={lineX} cy={y} r={CONTROL_RADIUS} fill="#5599ff" />;
+        }
+        if (gate.gateType === 'SWAP') {
+          // X symbol
+          const size = CONTROL_RADIUS * 1.5;
+          return (
+            <g key={`t-${gate.id}-${q}`} transform={`translate(${lineX}, ${y})`}>
+              <line x1={-size} y1={-size} x2={size} y2={size} stroke="#5599ff" strokeWidth={3} />
+              <line x1={-size} y1={size} x2={size} y2={-size} stroke="#5599ff" strokeWidth={3} />
+            </g>
+          );
+        }
+        return null;
       })}
     </g>
   );
@@ -178,7 +174,7 @@ export function CircuitGrid({
   let ghostLine = null;
   if (pendingGate && svgRef.current) {
     const startX = pendingGate.timestep * SLOT_SIZE + SLOT_CENTER;
-    const startY = pendingGate.control * SLOT_SIZE + SLOT_CENTER;
+    const startY = pendingGate.controls[0] * SLOT_SIZE + SLOT_CENTER;
 
     // Convert screen mouse coords to relative SVG coords
     const relativeMouseX = mousePosition.x - svgOffset.x;
@@ -264,32 +260,34 @@ export function CircuitGrid({
         })}
 
         {/* Labels */}
-        {Array.from({ length: numQubits }, (_, q) => (
-          <text
-            key={`label-q-${q}`}
-            x={-10}
-            y={q * SLOT_SIZE + SLOT_CENTER}
-            textAnchor="end"
-            dominantBaseline="central"
-            fill="#888"
-            fontSize={12}
-          >
-            q{q}
-          </text>
-        ))}
-        {Array.from({ length: numClassical }, (_, c) => (
-          <text
-            key={`label-c-${c}`}
-            x={-10}
-            y={(numQubits + 1 + c) * SLOT_SIZE + SLOT_CENTER}
-            textAnchor="end"
-            dominantBaseline="central"
-            fill="#888"
-            fontSize={12}
-          >
-            c{c}
-          </text>
-        ))}
+        <g id="labels">
+          {Array.from({ length: numQubits }, (_, q) => (
+            <text
+              key={`q-label-${q}`}
+              x={WIRE_PADDING - 10}
+              y={q * SLOT_SIZE + SLOT_CENTER}
+              fill="#aaa"
+              dominantBaseline="central"
+              textAnchor="end"
+              fontSize={12}
+            >
+              q[{q}]
+            </text>
+          ))}
+          {Array.from({ length: numClassical }, (_, c) => (
+            <text
+              key={`c-label-${c}`}
+              x={WIRE_PADDING - 10}
+              y={(numQubits + 1 + c) * SLOT_SIZE + SLOT_CENTER}
+              fill="#aaa"
+              dominantBaseline="central"
+              textAnchor="end"
+              fontSize={12}
+            >
+              c[{c}]
+            </text>
+          ))}
+        </g>
 
           {/* Layer 6: Ghost Line */}
           <g id="ghost-line">
