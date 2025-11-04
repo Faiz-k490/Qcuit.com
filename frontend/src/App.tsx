@@ -21,6 +21,7 @@ import { CircuitState, DraggingGate, GateInstance, SimulationResult, PendingGate
 import { GatePalette } from './components/GatePalette';
 import { CircuitGrid } from './components/CircuitGrid';
 import { OutputDisplay } from './components/OutputDisplay';
+import { useCircuitValidator } from './hooks/useCircuitValidator';
 
 // Define the initial state for the circuit
 const initialState: CircuitState = {
@@ -54,9 +55,9 @@ function App() {
   const [circuitState, setCircuitState] = useState<CircuitState>(initialState);
   const [results, setResults] = useState<SimulationResult | null>(null);
   const [activeDragItem, setActiveDragItem] = useState<DraggingGate | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [pendingGate, setPendingGate] = useState<PendingGate | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const validationErrors = useCircuitValidator(circuitState, pendingGate);
 
   // Setup D&D sensors
   const sensors = useSensors(
