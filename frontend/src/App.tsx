@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Button, Center, Paper, Text } from '@mantine/core';
+import { Box, Button, Center, Paper, Text, Group } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { modals } from '@mantine/modals';
 import {
@@ -84,6 +84,35 @@ function App() {
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, [activeDragItem]);
+
+  // --- HOOK FOR LOADING STATE FROM URL ---
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sharedState = urlParams.get('circuit');
+
+      if (sharedState) {
+        const stateString = atob(sharedState);
+        const loadedState: CircuitState = JSON.parse(stateString);
+
+        if (loadedState.numQubits && loadedState.gates) {
+          setCircuitState(loadedState);
+          notifications.show({
+            title: 'Circuit Loaded',
+            message: 'Successfully loaded shared circuit.',
+            color: 'blue',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load shared circuit:', error);
+      notifications.show({
+        title: 'Load Error',
+        message: 'Could not load shared circuit.',
+        color: 'red',
+      });
+    }
+  }, []);
 
   // --- D&D Handlers ---
   // --- D&D Handlers ---
@@ -279,6 +308,32 @@ function App() {
     }
   }
 
+  // --- SHARE FUNCTION ---
+  function getShareableLink() {
+    try {
+      const stateString = JSON.stringify(circuitState);
+      const base64State = btoa(stateString);
+
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set('circuit', base64State);
+
+      navigator.clipboard.writeText(url.toString());
+      notifications.show({
+        title: 'Link Copied!',
+        message: 'Your circuit is copied to the clipboard.',
+        color: 'blue',
+      });
+    } catch (error) {
+      console.error('Failed to create shareable link:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Could not create shareable link.',
+        color: 'red',
+      });
+    }
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -302,12 +357,12 @@ function App() {
             <PanelGroup direction="vertical">
               <Panel defaultSize={65} minSize={40}>
                   <Paper style={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
-                  <Button
-                    onClick={onSimulateClick}
-                    style={{ position: 'absolute', top: 10, right: 10, zIndex: 100 }}
-                  >
-                    Simulate
-                  </Button>
+                  <Box style={{ position: 'absolute', top: 10, right: 10, zIndex: 100 }}>
+                    <Group>
+                      <Button onClick={getShareableLink} variant="default">Share</Button>
+                      <Button onClick={onSimulateClick}>Simulate</Button>
+                    </Group>
+                  </Box>
 
                     {/* --- UPDATE: Pass pendingGate and mousePosition --- */}
                   <CircuitGrid
