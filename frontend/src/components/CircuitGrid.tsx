@@ -1,6 +1,7 @@
 // In frontend/src/components/CircuitGrid.tsx
+import { useRef, useState, useEffect } from 'react';
 import { Box } from '@mantine/core';
-import { CircuitState, GateInstance, MultiQubitGateInstance, Measurement } from '../types';
+import { CircuitState, GateInstance, MultiQubitGateInstance, Measurement, PendingGate } from '../types';
 import { DroppableSlot } from './DroppableSlot';
 import {
   SLOT_SIZE,
@@ -147,20 +148,59 @@ function SvgMeasurementLine({ gate, x, numQubits }: { gate: Measurement; x: numb
 export function CircuitGrid({
   circuitState,
   onSlotClick,
+  pendingGate,
+  mousePosition,
 }: {
   circuitState: CircuitState;
   onSlotClick: (id: string) => void;
+  pendingGate: PendingGate | null;
+  mousePosition: { x: number; y: number };
 }) {
   const { numQubits, numClassical, numTimesteps, gates, multiQubitGates, measurements } =
     circuitState;
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [svgOffset, setSvgOffset] = useState({ x: 0, y: 0 });
+
+  // Effect to get SVG position
+  useEffect(() => {
+    if (svgRef.current) {
+      const rect = svgRef.current.getBoundingClientRect();
+      setSvgOffset({ x: rect.left, y: rect.top });
+    }
+  }, [pendingGate]);
 
   const totalRows = numQubits + 1 + numClassical;
   const svgWidth = numTimesteps * SLOT_SIZE;
   const svgHeight = totalRows * SLOT_SIZE + WIRE_PADDING * 2;
 
+  // Calculate ghost line coordinates
+  let ghostLine = null;
+  if (pendingGate && svgRef.current) {
+    const startX = pendingGate.timestep * SLOT_SIZE + SLOT_CENTER;
+    const startY = pendingGate.control * SLOT_SIZE + SLOT_CENTER;
+
+    // Convert screen mouse coords to relative SVG coords
+    const relativeMouseX = mousePosition.x - svgOffset.x;
+    const relativeMouseY = mousePosition.y - svgOffset.y;
+
+    ghostLine = (
+      <line
+        x1={startX}
+        y1={startY}
+        x2={relativeMouseX}
+        y2={relativeMouseY}
+        stroke="#999"
+        strokeWidth={2}
+        strokeDasharray="4 4"
+        style={{ pointerEvents: 'none' }}
+      />
+    );
+  }
+
   return (
     <Box style={{ overflow: 'auto', height: '100%', backgroundColor: '#1e1e1e' }}>
-      <svg width={svgWidth} height={svgHeight}>
+      <svg ref={svgRef} width={svgWidth} height={svgHeight} style={{ display: 'block' }}>
         {/* Define arrowhead marker */}
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
@@ -250,6 +290,11 @@ export function CircuitGrid({
             c{c}
           </text>
         ))}
+
+          {/* Layer 6: Ghost Line */}
+          <g id="ghost-line">
+            {ghostLine}
+          </g>
       </svg>
     </Box>
   );

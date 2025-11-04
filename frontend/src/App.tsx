@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Button, Center, Paper, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { modals } from '@mantine/modals';
@@ -56,6 +56,7 @@ function App() {
   const [activeDragItem, setActiveDragItem] = useState<DraggingGate | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [pendingGate, setPendingGate] = useState<PendingGate | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   // Setup D&D sensors
   const sensors = useSensors(
@@ -66,6 +67,22 @@ function App() {
       },
     })
   );
+
+  // --- Mouse Tracking Effect ---
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
+
+    // Only listen for mouse move when a gate is NOT being dragged
+    if (!activeDragItem) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [activeDragItem]);
 
   // --- D&D Handlers ---
   // --- D&D Handlers ---
@@ -78,6 +95,9 @@ function App() {
 
   function handleDragEnd(event: DragEndEvent) {
     const { over } = event;
+    
+    // Clear activeDragItem first to re-enable mouse tracking
+    setActiveDragItem(null);
 
     if (activeDragItem && over && over.id) {
       const overId = String(over.id);
@@ -156,23 +176,18 @@ function App() {
         }
       }
     }
-
-    setActiveDragItem(null);
   }
 
-  // --- NEW: Slot Click Handler ---
+  // --- Slot Click Handler ---
   function onSlotClick(slotId: string) {
     // Do nothing if no gate is pending
     if (!pendingGate) return;
 
     // Parse the clicked slot ID
-    const [, type, index_str, t_str] = slotId.match(/slot-([qc])(\d+)-t(\d+)/) || [];
-    const index = parseInt(index_str, 10);
-    const timestep = parseInt(t_str, 10);
-
-    // Check for a valid click
-    if (!type || timestep !== pendingGate.timestep) {
-      // Clicked in a different timestep, cancel the pending gate
+    const slotMatch = slotId.match(/slot-([qc])(\d+)-t(\d+)/);
+    
+    // Cancel if invalid slot or wrong timestep
+    if (!slotMatch || parseInt(slotMatch[3], 10) !== pendingGate.timestep) {
       setPendingGate(null);
       notifications.show({
         title: 'Gate Canceled',
@@ -181,6 +196,10 @@ function App() {
       });
       return;
     }
+
+    const [, type, index_str, t_str] = slotMatch;
+    const index = parseInt(index_str, 10);
+    const timestep = parseInt(t_str, 10);
 
     // --- Handle Multi-Qubit Gate Completion ---
     if (['CNOT', 'CZ', 'SWAP', 'CCNOT'].includes(pendingGate.gateType)) {
@@ -281,7 +300,7 @@ function App() {
           <Panel defaultSize={55} minSize={40}>
             <PanelGroup direction="vertical">
               <Panel defaultSize={65} minSize={40}>
-                <Paper style={{ height: '100%', position: 'relative' }}>
+                  <Paper style={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
                   <Button
                     onClick={onSimulateClick}
                     style={{ position: 'absolute', top: 10, right: 10, zIndex: 100 }}
@@ -289,10 +308,12 @@ function App() {
                     Simulate
                   </Button>
 
-                  {/* --- UPDATE: Pass onSlotClick --- */}
+                    {/* --- UPDATE: Pass pendingGate and mousePosition --- */}
                   <CircuitGrid
                     circuitState={circuitState}
                     onSlotClick={onSlotClick}
+                      pendingGate={pendingGate}
+                      mousePosition={mousePosition}
                   />
 
                 </Paper>
