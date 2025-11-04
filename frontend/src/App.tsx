@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Button, Center, Paper, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { modals } from '@mantine/modals';
 import {
   DndContext,
   DragEndEvent,
@@ -77,35 +78,23 @@ function App() {
   function handleDragEnd(event: DragEndEvent) {
     const { over } = event;
 
-    // Check if we have an active item and a drop target
     if (activeDragItem && over && over.id) {
       const overId = String(over.id);
+      const gateType = activeDragItem.gateType;
 
-      // Check if the drop target is a circuit slot
       if (overId.startsWith('slot-q')) {
-        // Parse "slot-q0-t5" into [0, 5]
         const [, q_str, t_str] = overId.split('-').map(s => s.substring(1));
         const qubit = parseInt(q_str, 10);
         const timestep = parseInt(t_str, 10);
         const slotKey = `q_${qubit}-${timestep}`;
 
-        // TODO: Add logic for multi-qubit gates and measurements
+        // --- DEFINE GATE TYPES ---
+        const simpleGates = ['H', 'X', 'Y', 'Z', 'S', 'T', 'SDG', 'TDG'];
+        const parametricGates = ['RX', 'RY', 'RZ'];
 
-        // For now, only handle single-qubit gates
-        const isSingleQubitGate = ['H', 'X', 'Y', 'Z', 'RX', 'RY', 'RZ', 'S', 'T'].includes(
-          activeDragItem.gateType
-        );
-
-        if (isSingleQubitGate) {
-          const newGate: GateInstance = {
-            id: uuidv4(),
-            gateType: activeDragItem.gateType,
-            qubit: qubit,
-            timestep: timestep,
-          };
-
+        // --- FUNCTION TO ADD A GATE ---
+        const addGateToState = (gate: GateInstance) => {
           setCircuitState(prevState => {
-            // Check for collision
             if (prevState.gates[slotKey]) {
               notifications.show({
                 title: 'Error',
@@ -114,19 +103,47 @@ function App() {
               });
               return prevState;
             }
-
-            // Add the new gate
-            const newGates = {
-              ...prevState.gates,
-              [slotKey]: newGate,
-            };
+            const newGates = { ...prevState.gates, [slotKey]: gate };
             return { ...prevState, gates: newGates };
           });
+        };
+
+        // --- LOGIC FOR DIFFERENT GATE TYPES ---
+        if (simpleGates.includes(gateType)) {
+          // Handle simple gates
+          const newGate: GateInstance = {
+            id: uuidv4(),
+            gateType: gateType,
+            qubit: qubit,
+            timestep: timestep,
+          };
+          addGateToState(newGate);
+
+        } else if (parametricGates.includes(gateType)) {
+          // Handle parametric gates: Open modal
+          modals.openContextModal({
+            modal: 'parametricModal',
+            title: `Set ${gateType} Parameter`,
+            innerProps: {
+              gateType: gateType,
+              onConfirm: (theta: number) => {
+                const newGate: GateInstance = {
+                  id: uuidv4(),
+                  gateType: gateType,
+                  qubit: qubit,
+                  timestep: timestep,
+                  theta: theta, // <-- Add the angle
+                };
+                addGateToState(newGate);
+              },
+            },
+          });
         }
+        // TODO: Add logic for CNOT, MEASURE, etc.
       }
     }
 
-    setActiveDragItem(null); // Clear the active item
+    setActiveDragItem(null);
   }
 
   // --- API Call ---

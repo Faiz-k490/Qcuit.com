@@ -4,6 +4,7 @@ import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import App from './App';
+import { ParametricModal } from './components/ParametricModal';
 
 // Import Mantine styles
 import '@mantine/core/styles.css';
@@ -15,7 +16,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <MantineProvider defaultColorScheme="dark">
-      <ModalsProvider>
+      <ModalsProvider modals={{ parametricModal: ParametricModal }}>
         <Notifications />
         <App />
       </ModalsProvider>
