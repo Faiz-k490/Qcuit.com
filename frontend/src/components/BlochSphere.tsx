@@ -36,7 +36,7 @@ export function BlochSphere({ numQubits, gates, multiQubitGates }: BlochSpherePr
     const fetchBlochState = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5001/api/statevector', {
+        const response = await fetch('/api/statevector', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ numQubits, gates, multiQubitGates }),

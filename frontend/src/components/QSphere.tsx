@@ -63,7 +63,7 @@ export function QSphere({ numQubits, gates, multiQubitGates }: QSphereProps) {
       setError(null);
       
       try {
-        const response = await fetch('http://localhost:5001/api/statevector', {
+        const response = await fetch('/api/statevector', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -46,7 +46,7 @@ export function DebugTimeline({ numQubits, gates, multiQubitGates, maxTimestep }
       const newSnapshots: StateSnapshot[] = [];
       
       // Get initial state
-      const initialResponse = await fetch('http://localhost:5001/api/simulate', {
+      const initialResponse = await fetch('/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -82,7 +82,7 @@ export function DebugTimeline({ numQubits, gates, multiQubitGates, maxTimestep }
           }
         });
 
-        const response = await fetch('http://localhost:5001/api/simulate', {
+        const response = await fetch('/api/simulate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

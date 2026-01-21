@@ -336,7 +336,7 @@ export function CircuitProvider({ children }: { children: ReactNode }) {
   // Run simulation via Flask backend
   const runCircuit = useCallback(async () => {
     // Use direct URL for development, proxy for production
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/simulate';
+    const API_URL = process.env.REACT_APP_API_URL || '/api/simulate';
     setIsSimulating(true);
 
     try {

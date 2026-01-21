@@ -199,7 +199,7 @@ function CircuitEditor() {
   // Optimize handler
   const handleOptimize = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/optimize', {
+      const response = await fetch('/api/optimize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

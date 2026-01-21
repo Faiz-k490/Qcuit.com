@@ -55,7 +55,7 @@ export function ResourcePanel({ numQubits, gates, multiQubitGates }: ResourcePan
     const fetchEstimate = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5001/api/estimate', {
+        const response = await fetch('/api/estimate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
