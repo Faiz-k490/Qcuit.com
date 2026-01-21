@@ -45,7 +45,9 @@ function CircuitEditor() {
           },
           multiQubitGates: [
             { id: 'preset-cnot-0', gateType: 'CNOT', control: 0, target: 1, timestep: 1 }
-          ]
+          ],
+          measurements: [],
+          noiseLevel: 0
         };
         break;
       case 'ghz3':
@@ -59,7 +61,9 @@ function CircuitEditor() {
           multiQubitGates: [
             { id: 'preset-cnot-0', gateType: 'CNOT', control: 0, target: 1, timestep: 1 },
             { id: 'preset-cnot-1', gateType: 'CNOT', control: 1, target: 2, timestep: 2 }
-          ]
+          ],
+          measurements: [],
+          noiseLevel: 0
         };
         break;
       case 'superposition':
@@ -72,7 +76,9 @@ function CircuitEditor() {
             '1-0': { id: 'preset-h-1', gateType: 'H', qubit: 1, timestep: 0 },
             '2-0': { id: 'preset-h-2', gateType: 'H', qubit: 2, timestep: 0 }
           },
-          multiQubitGates: []
+          multiQubitGates: [],
+          measurements: [],
+          noiseLevel: 0
         };
         break;
       case 'qft2':
@@ -86,7 +92,9 @@ function CircuitEditor() {
           },
           multiQubitGates: [
             { id: 'preset-cz-0', gateType: 'CZ', control: 0, target: 1, timestep: 1 }
-          ]
+          ],
+          measurements: [],
+          noiseLevel: 0
         };
         break;
       case 'swap':
@@ -99,7 +107,9 @@ function CircuitEditor() {
           },
           multiQubitGates: [
             { id: 'preset-swap-0', gateType: 'SWAP', control: 0, target: 1, timestep: 1 }
-          ]
+          ],
+          measurements: [],
+          noiseLevel: 0
         };
         break;
       case 'toffoli':
@@ -113,7 +123,9 @@ function CircuitEditor() {
           },
           multiQubitGates: [
             { id: 'preset-ccx-0', gateType: 'CCX', control: 0, control2: 1, target: 2, timestep: 1 }
-          ]
+          ],
+          measurements: [],
+          noiseLevel: 0
         };
         break;
       default:
