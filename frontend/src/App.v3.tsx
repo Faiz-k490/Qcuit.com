@@ -41,10 +41,10 @@ function CircuitEditor() {
           numClassical: 2,
           numTimesteps: 10,
           gates: {
-            '0-0': { id: 'preset-h-0', gateType: 'H', qubit: 0, timestep: 0 }
+            'q_0-0': { id: 'preset-h-0', gateType: 'H', qubit: 0, timestep: 0 }
           },
           multiQubitGates: [
-            { id: 'preset-cnot-0', gateType: 'CNOT', control: 0, target: 1, timestep: 1 }
+            { id: 'preset-cnot-0', gateType: 'CNOT', controls: [0], targets: [1], timestep: 1 }
           ],
           measurements: [],
           noiseLevel: 0
@@ -56,11 +56,11 @@ function CircuitEditor() {
           numClassical: 3,
           numTimesteps: 10,
           gates: {
-            '0-0': { id: 'preset-h-0', gateType: 'H', qubit: 0, timestep: 0 }
+            'q_0-0': { id: 'preset-h-0', gateType: 'H', qubit: 0, timestep: 0 }
           },
           multiQubitGates: [
-            { id: 'preset-cnot-0', gateType: 'CNOT', control: 0, target: 1, timestep: 1 },
-            { id: 'preset-cnot-1', gateType: 'CNOT', control: 1, target: 2, timestep: 2 }
+            { id: 'preset-cnot-0', gateType: 'CNOT', controls: [0], targets: [1], timestep: 1 },
+            { id: 'preset-cnot-1', gateType: 'CNOT', controls: [1], targets: [2], timestep: 2 }
           ],
           measurements: [],
           noiseLevel: 0
@@ -72,9 +72,9 @@ function CircuitEditor() {
           numClassical: 3,
           numTimesteps: 10,
           gates: {
-            '0-0': { id: 'preset-h-0', gateType: 'H', qubit: 0, timestep: 0 },
-            '1-0': { id: 'preset-h-1', gateType: 'H', qubit: 1, timestep: 0 },
-            '2-0': { id: 'preset-h-2', gateType: 'H', qubit: 2, timestep: 0 }
+            'q_0-0': { id: 'preset-h-0', gateType: 'H', qubit: 0, timestep: 0 },
+            'q_1-0': { id: 'preset-h-1', gateType: 'H', qubit: 1, timestep: 0 },
+            'q_2-0': { id: 'preset-h-2', gateType: 'H', qubit: 2, timestep: 0 }
           },
           multiQubitGates: [],
           measurements: [],
@@ -87,11 +87,11 @@ function CircuitEditor() {
           numClassical: 2,
           numTimesteps: 10,
           gates: {
-            '0-0': { id: 'preset-h-0', gateType: 'H', qubit: 0, timestep: 0 },
-            '1-2': { id: 'preset-h-1', gateType: 'H', qubit: 1, timestep: 2 }
+            'q_0-0': { id: 'preset-h-0', gateType: 'H', qubit: 0, timestep: 0 },
+            'q_1-2': { id: 'preset-h-1', gateType: 'H', qubit: 1, timestep: 2 }
           },
           multiQubitGates: [
-            { id: 'preset-cz-0', gateType: 'CZ', control: 0, target: 1, timestep: 1 }
+            { id: 'preset-cz-0', gateType: 'CZ', controls: [0], targets: [1], timestep: 1 }
           ],
           measurements: [],
           noiseLevel: 0
@@ -103,10 +103,10 @@ function CircuitEditor() {
           numClassical: 2,
           numTimesteps: 10,
           gates: {
-            '0-0': { id: 'preset-x-0', gateType: 'X', qubit: 0, timestep: 0 }
+            'q_0-0': { id: 'preset-x-0', gateType: 'X', qubit: 0, timestep: 0 }
           },
           multiQubitGates: [
-            { id: 'preset-swap-0', gateType: 'SWAP', control: 0, target: 1, timestep: 1 }
+            { id: 'preset-swap-0', gateType: 'SWAP', controls: [0], targets: [1], timestep: 1 }
           ],
           measurements: [],
           noiseLevel: 0
@@ -118,11 +118,11 @@ function CircuitEditor() {
           numClassical: 3,
           numTimesteps: 10,
           gates: {
-            '0-0': { id: 'preset-x-0', gateType: 'X', qubit: 0, timestep: 0 },
-            '1-0': { id: 'preset-x-1', gateType: 'X', qubit: 1, timestep: 0 }
+            'q_0-0': { id: 'preset-x-0', gateType: 'X', qubit: 0, timestep: 0 },
+            'q_1-0': { id: 'preset-x-1', gateType: 'X', qubit: 1, timestep: 0 }
           },
           multiQubitGates: [
-            { id: 'preset-ccx-0', gateType: 'CCX', control: 0, control2: 1, target: 2, timestep: 1 }
+            { id: 'preset-ccx-0', gateType: 'CCX', controls: [0, 1], targets: [2], timestep: 1 }
           ],
           measurements: [],
           noiseLevel: 0
