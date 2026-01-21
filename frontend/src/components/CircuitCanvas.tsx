@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Stage, Layer, Line, Rect, Text, Group, Circle } from 'react-konva';
-import Konva from 'konva';
+import React, { useState, useCallback } from 'react';
+import { Box } from '@mantine/core';
 import { useCircuit } from '../store/CircuitContext';
 import { GateInstance, MultiQubitGateInstance, Measurement } from '../types';
 import {
@@ -12,440 +11,340 @@ import {
   CONTROL_RADIUS,
 } from '../gridConstants';
 
-// Snap position to grid
-function snapToGrid(x: number, y: number): { qubit: number; timestep: number } {
-  const timestep = Math.round((x - WIRE_PADDING) / SLOT_SIZE);
-  const qubit = Math.round(y / SLOT_SIZE);
-  return { qubit: Math.max(0, qubit), timestep: Math.max(0, timestep) };
+const SINGLE_GATES = ['H', 'X', 'Y', 'Z', 'S', 'T', 'S†', 'T†', 'I'];
+const PARAMETRIC_GATES = ['RX', 'RY', 'RZ'];
+const MULTI_GATES = ['CNOT', 'CZ', 'SWAP', 'CCX'];
+
+interface CircuitCanvasProps {
+  selectedGate: string | null;
+  onGateSelect: (gate: string | null) => void;
 }
 
-// Get pixel position from grid coordinates
-function gridToPixel(qubit: number, timestep: number): { x: number; y: number } {
-  return {
-    x: WIRE_PADDING + timestep * SLOT_SIZE + (SLOT_SIZE - GATE_SIZE) / 2,
-    y: qubit * SLOT_SIZE + (SLOT_SIZE - GATE_SIZE) / 2,
-  };
-}
+// Gate color coding by family
+const getGateColors = (gateType: string) => {
+  if (['H'].includes(gateType)) return { fill: '#1565c0', stroke: '#42a5f5', hover: '#1976d2' };
+  if (['S', 'S†', 'T', 'T†'].includes(gateType)) return { fill: '#6a1b9a', stroke: '#ab47bc', hover: '#7b1fa2' };
+  if (['Y', 'Z'].includes(gateType)) return { fill: '#2e7d32', stroke: '#66bb6a', hover: '#388e3c' };
+  if (['RX', 'RY', 'RZ'].includes(gateType)) return { fill: '#e65100', stroke: '#ff9800', hover: '#ef6c00' };
+  if (['I'].includes(gateType)) return { fill: '#424242', stroke: '#757575', hover: '#616161' };
+  return { fill: '#3e3e3e', stroke: '#888', hover: '#4e4e4e' };
+};
 
-// Draggable Gate component
-interface DraggableGateProps {
-  gate: GateInstance;
-  onDragEnd: (gateId: string, newQubit: number, newTimestep: number) => void;
-  onDelete: (gateId: string) => void;
-  numQubits: number;
-  numTimesteps: number;
-}
+function SvgGate({ gate, x, y, onDelete }: { 
+  gate: GateInstance; x: number; y: number; onDelete: (id: string) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const cx = x + SLOT_CENTER;
+  const cy = y + SLOT_CENTER;
+  const gateX = x + (SLOT_SIZE - GATE_SIZE) / 2;
+  const gateY = y + (SLOT_SIZE - GATE_SIZE) / 2;
+  const r = GATE_SIZE / 2 - 2;
 
-function DraggableGate({ gate, onDragEnd, onDelete, numQubits, numTimesteps }: DraggableGateProps) {
-  const { x, y } = gridToPixel(gate.qubit, gate.timestep);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-    setIsDragging(false);
-    const node = e.target;
-    const { qubit, timestep } = snapToGrid(
-      node.x() + GATE_SIZE / 2,
-      node.y() + GATE_SIZE / 2
+  // X gate: circle with + (oplus symbol)
+  if (gate.gateType === 'X') {
+    return (
+      <g style={{ cursor: 'pointer' }} 
+         onDoubleClick={() => onDelete(gate.id)}
+         onMouseEnter={() => setHovered(true)}
+         onMouseLeave={() => setHovered(false)}>
+        <circle cx={cx} cy={cy} r={r} fill="none" 
+          stroke={hovered ? '#90caf9' : '#64b5f6'} strokeWidth={hovered ? 3 : 2} />
+        <line x1={cx - r + 4} y1={cy} x2={cx + r - 4} y2={cy} 
+          stroke={hovered ? '#90caf9' : '#64b5f6'} strokeWidth={2} />
+        <line x1={cx} y1={cy - r + 4} x2={cx} y2={cy + r - 4} 
+          stroke={hovered ? '#90caf9' : '#64b5f6'} strokeWidth={2} />
+      </g>
     );
-    // Clamp to valid range
-    const clampedQubit = Math.max(0, Math.min(numQubits - 1, qubit));
-    const clampedTimestep = Math.max(0, Math.min(numTimesteps - 1, timestep));
-    
-    // Snap back to grid position
-    const snapped = gridToPixel(clampedQubit, clampedTimestep);
-    node.position({ x: snapped.x, y: snapped.y });
-    
-    onDragEnd(gate.id, clampedQubit, clampedTimestep);
-  };
+  }
 
-  const handleDblClick = () => {
-    onDelete(gate.id);
-  };
-
-  // Display theta for parametric gates
-  const displayText = gate.theta !== undefined 
-    ? `${gate.gateType}\n${gate.theta.toFixed(2)}`
-    : gate.gateType;
+  const colors = getGateColors(gate.gateType);
 
   return (
-    <Group
-      x={x}
-      y={y}
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDblClick={handleDblClick}
-      opacity={isDragging ? 0.7 : 1}
-    >
-      <Rect
-        width={GATE_SIZE}
-        height={GATE_SIZE}
-        fill={isDragging ? '#555' : '#3e3e3e'}
-        stroke={isDragging ? '#aaa' : '#888'}
-        strokeWidth={1}
-        cornerRadius={GATE_RADIUS}
-        shadowColor={isDragging ? '#000' : undefined}
-        shadowBlur={isDragging ? 10 : 0}
-        shadowOpacity={0.5}
-      />
-      <Text
-        text={displayText}
-        width={GATE_SIZE}
-        height={GATE_SIZE}
-        align="center"
-        verticalAlign="middle"
-        fill="white"
-        fontSize={gate.theta !== undefined ? 10 : 14}
-        fontStyle="bold"
-      />
-    </Group>
+    <g style={{ cursor: 'pointer' }} 
+       onDoubleClick={() => onDelete(gate.id)}
+       onMouseEnter={() => setHovered(true)}
+       onMouseLeave={() => setHovered(false)}>
+      <rect x={gateX} y={gateY} width={GATE_SIZE} height={GATE_SIZE}
+        fill={hovered ? colors.hover : colors.fill} 
+        stroke={hovered ? '#fff' : colors.stroke} 
+        strokeWidth={hovered ? 2.5 : 2} rx={GATE_RADIUS} />
+      <text x={cx} y={gate.theta !== undefined ? cy - 4 : cy}
+        textAnchor="middle" dominantBaseline="central"
+        fill="white" fontSize={gate.gateType.length > 2 ? 11 : 14} fontWeight="bold">
+        {gate.gateType}
+      </text>
+      {gate.theta !== undefined && (
+        <text x={cx} y={cy + 10}
+          textAnchor="middle" dominantBaseline="central" fill="#ffcc80" fontSize={9}>
+          {(gate.theta / Math.PI).toFixed(2)}π
+        </text>
+      )}
+    </g>
   );
 }
 
-// Multi-qubit gate visual (CNOT, CZ, SWAP, CCNOT)
-interface MultiGateVisualProps {
-  gate: MultiQubitGateInstance;
-  onDelete: (gateId: string) => void;
-}
-
-function MultiGateVisual({ gate, onDelete }: MultiGateVisualProps) {
+function SvgMultiGate({ gate, x, onDelete }: { 
+  gate: MultiQubitGateInstance; x: number; onDelete: (id: string) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
   const allQubits = [...gate.controls, ...gate.targets].sort((a, b) => a - b);
-  const lineX = WIRE_PADDING + gate.timestep * SLOT_SIZE + SLOT_CENTER;
   const yStart = allQubits[0] * SLOT_SIZE + SLOT_CENTER;
   const yEnd = allQubits[allQubits.length - 1] * SLOT_SIZE + SLOT_CENTER;
+  const lineX = x + SLOT_CENTER;
+  const targetR = GATE_SIZE / 2 - 4;
+  const lineColor = hovered ? '#90caf9' : '#64b5f6';
 
-  const handleDblClick = () => {
-    onDelete(gate.id);
-  };
+  // For SWAP, draw X on both qubits
+  if (gate.gateType === 'SWAP') {
+    const size = 8;
+    return (
+      <g style={{ cursor: 'pointer' }} 
+         onDoubleClick={() => onDelete(gate.id)}
+         onMouseEnter={() => setHovered(true)}
+         onMouseLeave={() => setHovered(false)}>
+        <line x1={lineX} y1={yStart} x2={lineX} y2={yEnd} stroke={lineColor} strokeWidth={hovered ? 3 : 2} />
+        {gate.targets.map((q) => {
+          const y = q * SLOT_SIZE + SLOT_CENTER;
+          return (
+            <g key={`swap-${gate.id}-${q}`}>
+              <line x1={lineX - size} y1={y - size} x2={lineX + size} y2={y + size} stroke={lineColor} strokeWidth={hovered ? 3 : 2.5} />
+              <line x1={lineX - size} y1={y + size} x2={lineX + size} y2={y - size} stroke={lineColor} strokeWidth={hovered ? 3 : 2.5} />
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
 
   return (
-    <Group onDblClick={handleDblClick}>
-      {/* Vertical connecting line */}
-      <Line points={[lineX, yStart, lineX, yEnd]} stroke="#5599ff" strokeWidth={2} />
-
+    <g style={{ cursor: 'pointer' }} 
+       onDoubleClick={() => onDelete(gate.id)}
+       onMouseEnter={() => setHovered(true)}
+       onMouseLeave={() => setHovered(false)}>
+      <line x1={lineX} y1={yStart} x2={lineX} y2={yEnd} stroke={lineColor} strokeWidth={hovered ? 3 : 2} />
       {/* Control dots */}
-      {gate.controls.map((q, idx) => (
-        <Circle
-          key={`ctrl-${idx}`}
-          x={lineX}
-          y={q * SLOT_SIZE + SLOT_CENTER}
-          radius={CONTROL_RADIUS}
-          fill="#5599ff"
-        />
+      {gate.controls.map((q) => (
+        <circle key={`c-${gate.id}-${q}`} cx={lineX} cy={q * SLOT_SIZE + SLOT_CENTER}
+          r={hovered ? CONTROL_RADIUS + 1 : CONTROL_RADIUS} fill={lineColor} />
       ))}
-
-      {/* Target symbols */}
-      {gate.targets.map((q, idx) => {
+      {/* Targets */}
+      {gate.targets.map((q) => {
         const y = q * SLOT_SIZE + SLOT_CENTER;
-
-        if (gate.gateType === 'CNOT' || gate.gateType === 'CCNOT') {
-          // Circle-plus (XOR) target
+        if (gate.gateType === 'CNOT' || gate.gateType === 'CCX') {
           return (
-            <Group key={`tgt-${idx}`} x={lineX} y={y}>
-              <Circle radius={CONTROL_RADIUS * 2} fill="#5599ff" />
-              <Line points={[-10, 0, 10, 0]} stroke="white" strokeWidth={3} />
-              <Line points={[0, -10, 0, 10]} stroke="white" strokeWidth={3} />
-            </Group>
+            <g key={`t-${gate.id}-${q}`}>
+              <circle cx={lineX} cy={y} r={targetR} fill="none" stroke={lineColor} strokeWidth={hovered ? 3 : 2} />
+              <line x1={lineX - targetR + 2} y1={y} x2={lineX + targetR - 2} y2={y} stroke={lineColor} strokeWidth={2} />
+              <line x1={lineX} y1={y - targetR + 2} x2={lineX} y2={y + targetR - 2} stroke={lineColor} strokeWidth={2} />
+            </g>
           );
         }
-
         if (gate.gateType === 'CZ') {
-          // Solid dot for both control and target
-          return (
-            <Circle
-              key={`tgt-${idx}`}
-              x={lineX}
-              y={y}
-              radius={CONTROL_RADIUS}
-              fill="#5599ff"
-            />
-          );
+          return <circle key={`t-${gate.id}-${q}`} cx={lineX} cy={y} r={hovered ? CONTROL_RADIUS + 1 : CONTROL_RADIUS} fill={lineColor} />;
         }
-
-        if (gate.gateType === 'SWAP') {
-          // X symbol for SWAP
-          const size = CONTROL_RADIUS * 1.5;
-          return (
-            <Group key={`tgt-${idx}`} x={lineX} y={y}>
-              <Line points={[-size, -size, size, size]} stroke="#5599ff" strokeWidth={3} />
-              <Line points={[-size, size, size, -size]} stroke="#5599ff" strokeWidth={3} />
-            </Group>
-          );
-        }
-
         return null;
       })}
-    </Group>
+    </g>
   );
 }
 
-// Measurement visual
-interface MeasurementVisualProps {
-  measurement: Measurement;
-  numQubits: number;
-  onDelete: (measurementId: string) => void;
-}
-
-function MeasurementVisual({ measurement, numQubits, onDelete }: MeasurementVisualProps) {
-  const { x, y } = gridToPixel(measurement.qubit, measurement.timestep);
-  const lineX = WIRE_PADDING + measurement.timestep * SLOT_SIZE + SLOT_CENTER;
+function SvgMeasurement({ measurement, numQubits, x, onDelete }: { 
+  measurement: Measurement; numQubits: number; x: number; onDelete: (id: string) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const gateX = x + (SLOT_SIZE - GATE_SIZE) / 2;
+  const gateY = measurement.qubit * SLOT_SIZE + (SLOT_SIZE - GATE_SIZE) / 2;
+  const cx = x + SLOT_CENTER;
+  const cy = measurement.qubit * SLOT_SIZE + SLOT_CENTER;
+  const lineX = x + SLOT_CENTER;
   const qubitY = measurement.qubit * SLOT_SIZE + SLOT_CENTER;
   const classicalY = (measurement.classicalBit + numQubits + 1) * SLOT_SIZE + SLOT_CENTER;
-
-  const handleDblClick = () => {
-    onDelete(measurement.id);
-  };
-
-  return (
-    <Group onDblClick={handleDblClick}>
-      {/* Measurement box */}
-      <Rect
-        x={x}
-        y={y}
-        width={GATE_SIZE}
-        height={GATE_SIZE}
-        fill="#3e3e3e"
-        stroke="#888"
-        strokeWidth={1}
-        cornerRadius={GATE_RADIUS}
-      />
-      <Text
-        x={x}
-        y={y}
-        text="M"
-        width={GATE_SIZE}
-        height={GATE_SIZE}
-        align="center"
-        verticalAlign="middle"
-        fill="white"
-        fontSize={14}
-        fontStyle="bold"
-      />
-      {/* Arrow to classical wire */}
-      <Line
-        points={[lineX, qubitY + GATE_SIZE / 2, lineX, classicalY - 8]}
-        stroke="#aaaaff"
-        strokeWidth={2}
-      />
-      {/* Arrowhead */}
-      <Line
-        points={[lineX - 4, classicalY - 8, lineX, classicalY, lineX + 4, classicalY - 8]}
-        stroke="#aaaaff"
-        strokeWidth={2}
-        closed
-        fill="#aaaaff"
-      />
-    </Group>
-  );
-}
-
-// Palette gate for dragging onto canvas
-interface PaletteGateProps {
-  gateType: string;
-  x: number;
-  y: number;
-  onDragEnd: (gateType: string, x: number, y: number) => void;
-}
-
-function PaletteGate({ gateType, x, y, onDragEnd }: PaletteGateProps) {
-  const nodeRef = useRef<Konva.Group>(null);
-  const startPosRef = useRef({ x, y });
-
-  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-    const node = e.target;
-    const endX = node.x() + GATE_SIZE / 2;
-    const endY = node.y() + GATE_SIZE / 2;
-    
-    // Reset position back to palette
-    node.position(startPosRef.current);
-    
-    onDragEnd(gateType, endX, endY);
-  };
-
-  return (
-    <Group ref={nodeRef} x={x} y={y} draggable onDragEnd={handleDragEnd}>
-      <Rect
-        width={GATE_SIZE}
-        height={GATE_SIZE}
-        fill="#2e2e2e"
-        stroke="#666"
-        strokeWidth={1}
-        cornerRadius={GATE_RADIUS}
-      />
-      <Text
-        text={gateType}
-        width={GATE_SIZE}
-        height={GATE_SIZE}
-        align="center"
-        verticalAlign="middle"
-        fill="white"
-        fontSize={12}
-        fontStyle="bold"
-      />
-    </Group>
-  );
-}
-
-// Main Circuit Canvas component
-export function CircuitCanvas() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const meterR = GATE_SIZE / 2 - 6;
+  const arcY = cy + 4;
   
-  const {
-    state,
-    addGate,
-    moveGate,
-    deleteGate,
-    deleteMultiGate,
-    deleteMeasurement,
-  } = useCircuit();
+  return (
+    <g style={{ cursor: 'pointer' }} 
+       onDoubleClick={() => onDelete(measurement.id)}
+       onMouseEnter={() => setHovered(true)}
+       onMouseLeave={() => setHovered(false)}>
+      <rect x={gateX} y={gateY} width={GATE_SIZE} height={GATE_SIZE}
+        fill={hovered ? '#455a64' : '#37474f'} 
+        stroke={hovered ? '#fff' : '#78909c'} 
+        strokeWidth={hovered ? 2.5 : 2} rx={GATE_RADIUS} />
+      <path d={`M ${cx - meterR} ${arcY} A ${meterR} ${meterR} 0 0 1 ${cx + meterR} ${arcY}`}
+        fill="none" stroke="white" strokeWidth={1.5} />
+      <line x1={cx} y1={arcY} x2={cx + meterR * 0.7} y2={arcY - meterR * 0.9}
+        stroke="white" strokeWidth={1.5} />
+      <line x1={lineX} y1={qubitY + GATE_SIZE / 2} x2={lineX} y2={classicalY}
+        stroke={hovered ? '#bbdefb' : '#90caf9'} strokeWidth={2} strokeDasharray="4 2" />
+      <polygon points={`${lineX},${classicalY} ${lineX - 4},${classicalY - 8} ${lineX + 4},${classicalY - 8}`}
+        fill={hovered ? '#bbdefb' : '#90caf9'} />
+    </g>
+  );
+}
 
+function DroppableSlot({ id, x, y, onClick, isHighlighted, hasGate }: { 
+  id: string; x: number; y: number; onClick: (id: string) => void; 
+  isHighlighted?: boolean; hasGate?: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <rect x={x} y={y} width={SLOT_SIZE} height={SLOT_SIZE}
+      fill={isHighlighted ? 'rgba(85, 153, 255, 0.3)' : hovered && !hasGate ? 'rgba(255,255,255,0.05)' : 'transparent'}
+      stroke={hovered && !hasGate ? 'rgba(255,255,255,0.2)' : 'transparent'}
+      strokeWidth={1}
+      style={{ cursor: hasGate ? 'default' : 'pointer' }} 
+      onClick={() => onClick(id)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)} />
+  );
+}
+
+export function CircuitCanvas({ selectedGate, onGateSelect }: CircuitCanvasProps) {
+  const { state, addGate, deleteGate, addMultiGate, deleteMultiGate, deleteMeasurement, addMeasurement } = useCircuit();
   const { numQubits, numClassical, numTimesteps, gates, multiQubitGates, measurements } = state;
+  
+  const [pendingMultiGate, setPendingMultiGate] = useState<{
+    gateType: string; controls: number[]; timestep: number;
+  } | null>(null);
 
-  // Handle resize
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight,
-        });
-      }
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, []);
-
-  // Calculate canvas dimensions based on circuit size
   const totalRows = numQubits + 1 + numClassical;
-  const canvasWidth = Math.max(dimensions.width, WIRE_PADDING + numTimesteps * SLOT_SIZE + 50);
-  const canvasHeight = Math.max(dimensions.height, totalRows * SLOT_SIZE + 50);
+  const svgWidth = WIRE_PADDING + numTimesteps * SLOT_SIZE + 50;
+  const svgHeight = totalRows * SLOT_SIZE + 20;
 
-  // Handle gate drag end (from palette)
-  const handlePaletteDragEnd = useCallback((gateType: string, x: number, y: number) => {
-    // Check if dropped on valid canvas area
-    if (x < WIRE_PADDING || y < 0) return;
-    
-    const { qubit, timestep } = snapToGrid(x, y);
-    
-    // Validate bounds
-    if (qubit < 0 || qubit >= numQubits || timestep < 0 || timestep >= numTimesteps) {
+  // Check if slot has a gate
+  const slotHasGate = useCallback((q: number, t: number) => {
+    return Object.values(gates).some(g => g.qubit === q && g.timestep === t) ||
+           multiQubitGates.some(g => (g.controls.includes(q) || g.targets.includes(q)) && g.timestep === t) ||
+           measurements.some(m => m.qubit === q && m.timestep === t);
+  }, [gates, multiQubitGates, measurements]);
+
+  const handleSlotClick = useCallback((slotId: string) => {
+    const match = slotId.match(/slot-([qc])(\d+)-t(\d+)/);
+    if (!match) return;
+    const [, wireType, indexStr, timestepStr] = match;
+    const index = parseInt(indexStr, 10);
+    const timestep = parseInt(timestepStr, 10);
+
+    if (pendingMultiGate) {
+      if (wireType === 'q') {
+        if (pendingMultiGate.gateType === 'M') { setPendingMultiGate(null); return; }
+        if (pendingMultiGate.controls.includes(index)) return;
+        if (pendingMultiGate.gateType === 'CCX' && pendingMultiGate.controls.length === 1) {
+          setPendingMultiGate({ ...pendingMultiGate, controls: [...pendingMultiGate.controls, index] });
+          return;
+        }
+        const targets = pendingMultiGate.gateType === 'SWAP' ? [pendingMultiGate.controls[0], index] : [index];
+        addMultiGate({ gateType: pendingMultiGate.gateType, timestep: pendingMultiGate.timestep,
+          controls: pendingMultiGate.gateType === 'SWAP' ? [] : pendingMultiGate.controls, targets });
+        setPendingMultiGate(null); onGateSelect(null);
+      } else if (wireType === 'c' && pendingMultiGate.gateType === 'M') {
+        addMeasurement({ gateType: 'MEASUREMENT', qubit: pendingMultiGate.controls[0],
+          classicalBit: index, timestep: pendingMultiGate.timestep });
+        setPendingMultiGate(null); onGateSelect(null);
+      }
       return;
     }
-
-    // Simple gates
-    const simpleGates = ['H', 'X', 'Y', 'Z', 'S', 'T', 'SDG', 'TDG'];
-    if (simpleGates.includes(gateType)) {
-      addGate({ gateType, qubit, timestep });
+    if (!selectedGate) return;
+    if (wireType !== 'q') return;
+    if (SINGLE_GATES.includes(selectedGate)) { addGate({ gateType: selectedGate, qubit: index, timestep }); return; }
+    if (PARAMETRIC_GATES.includes(selectedGate)) { addGate({ gateType: selectedGate, qubit: index, timestep, theta: Math.PI / 4 }); return; }
+    if (MULTI_GATES.includes(selectedGate) || selectedGate === 'M') {
+      setPendingMultiGate({ gateType: selectedGate, controls: [index], timestep });
     }
-    // TODO: Handle parametric gates (RX, RY, RZ) with modal
-    // TODO: Handle multi-qubit gates (CNOT, CZ, SWAP, CCNOT) with multi-step placement
-  }, [addGate, numQubits, numTimesteps]);
+  }, [selectedGate, pendingMultiGate, addGate, addMultiGate, addMeasurement, onGateSelect]);
 
-  // Handle gate move (existing gate dragged to new position)
-  const handleGateDragEnd = useCallback((gateId: string, newQubit: number, newTimestep: number) => {
-    moveGate(gateId, newQubit, newTimestep);
-  }, [moveGate]);
+  const getHighlightedSlots = () => {
+    if (!pendingMultiGate) return new Set<string>();
+    const slots = new Set<string>();
+    if (pendingMultiGate.gateType === 'M') {
+      for (let c = 0; c < numClassical; c++) slots.add(`slot-c${c}-t${pendingMultiGate.timestep}`);
+    } else {
+      for (let q = 0; q < numQubits; q++) {
+        if (!pendingMultiGate.controls.includes(q)) slots.add(`slot-q${q}-t${pendingMultiGate.timestep}`);
+      }
+    }
+    return slots;
+  };
+  const highlightedSlots = getHighlightedSlots();
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        overflow: 'auto',
-        backgroundColor: '#1e1e1e',
-      }}
-    >
-      <Stage width={canvasWidth} height={canvasHeight}>
-        {/* Layer 1: Wires (static, cached for performance) */}
-        <Layer listening={false}>
+    <Box style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {(selectedGate || pendingMultiGate) && (
+        <Box style={{ padding: '4px 12px', paddingLeft: 200, backgroundColor: '#1a3a5c', color: '#5599ff', fontSize: 12,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{pendingMultiGate 
+            ? `Click ${pendingMultiGate.gateType === 'M' ? 'classical bit' : 'target qubit'} to complete ${pendingMultiGate.gateType}`
+            : `Selected: ${selectedGate} — Click a slot to place`}</span>
+          <span style={{ cursor: 'pointer', padding: '2px 8px' }}
+            onClick={() => { onGateSelect(null); setPendingMultiGate(null); }}>✕ Cancel</span>
+        </Box>
+      )}
+
+      <Box style={{ flex: 1, overflow: 'auto', backgroundColor: '#1e1e1e' }}>
+        <svg width={svgWidth} height={svgHeight} style={{ display: 'block' }}>
           {/* Qubit wires */}
           {Array.from({ length: numQubits }, (_, q) => (
-            <React.Fragment key={`qubit-${q}`}>
-              <Line
-                points={[
-                  WIRE_PADDING,
-                  q * SLOT_SIZE + SLOT_CENTER,
-                  canvasWidth,
-                  q * SLOT_SIZE + SLOT_CENTER,
-                ]}
-                stroke="#555"
-                strokeWidth={2}
-              />
-              <Text
-                x={5}
-                y={q * SLOT_SIZE + SLOT_CENTER - 6}
-                text={`q[${q}]`}
-                fill="#aaa"
-                fontSize={12}
-              />
-            </React.Fragment>
+            <g key={`qubit-wire-${q}`}>
+              <line x1={WIRE_PADDING} y1={q * SLOT_SIZE + SLOT_CENTER} x2={svgWidth}
+                y2={q * SLOT_SIZE + SLOT_CENTER} stroke="#555" strokeWidth={2} />
+              <text x={WIRE_PADDING - 10} y={q * SLOT_SIZE + SLOT_CENTER} fill="#aaa"
+                dominantBaseline="central" textAnchor="end" fontSize={12}>q[{q}]</text>
+            </g>
           ))}
-
-          {/* Classical wires (double line) */}
+          {/* Classical wires */}
           {Array.from({ length: numClassical }, (_, c) => {
             const y = (numQubits + 1 + c) * SLOT_SIZE + SLOT_CENTER;
             return (
-              <React.Fragment key={`classical-${c}`}>
-                <Line points={[WIRE_PADDING, y - 2, canvasWidth, y - 2]} stroke="#555" strokeWidth={1} />
-                <Line points={[WIRE_PADDING, y + 2, canvasWidth, y + 2]} stroke="#555" strokeWidth={1} />
-                <Text x={5} y={y - 6} text={`c[${c}]`} fill="#aaa" fontSize={12} />
-              </React.Fragment>
+              <g key={`classical-wire-${c}`}>
+                <line x1={WIRE_PADDING} y1={y - 2} x2={svgWidth} y2={y - 2} stroke="#555" strokeWidth={1} />
+                <line x1={WIRE_PADDING} y1={y + 2} x2={svgWidth} y2={y + 2} stroke="#555" strokeWidth={1} />
+                <text x={WIRE_PADDING - 10} y={y} fill="#aaa" dominantBaseline="central"
+                  textAnchor="end" fontSize={12}>c[{c}]</text>
+              </g>
             );
           })}
-        </Layer>
-
-        {/* Layer 2: Multi-qubit gates and measurements */}
-        <Layer>
+          {/* Qubit slots */}
+          {Array.from({ length: numQubits }, (_, q) =>
+            Array.from({ length: numTimesteps }, (_, t) => {
+              const slotId = `slot-q${q}-t${t}`;
+              return <DroppableSlot key={slotId} id={slotId} x={WIRE_PADDING + t * SLOT_SIZE}
+                y={q * SLOT_SIZE} onClick={handleSlotClick} 
+                isHighlighted={highlightedSlots.has(slotId)} hasGate={slotHasGate(q, t)} />;
+            })
+          )}
+          {/* Classical slots */}
+          {Array.from({ length: numClassical }, (_, c) =>
+            Array.from({ length: numTimesteps }, (_, t) => {
+              const slotId = `slot-c${c}-t${t}`;
+              return <DroppableSlot key={slotId} id={slotId} x={WIRE_PADDING + t * SLOT_SIZE}
+                y={(numQubits + 1 + c) * SLOT_SIZE} onClick={handleSlotClick} isHighlighted={highlightedSlots.has(slotId)} />;
+            })
+          )}
+          {/* Multi-qubit gates */}
           {multiQubitGates.map((gate) => (
-            <MultiGateVisual key={gate.id} gate={gate} onDelete={deleteMultiGate} />
+            <SvgMultiGate key={gate.id} gate={gate} x={WIRE_PADDING + gate.timestep * SLOT_SIZE} onDelete={deleteMultiGate} />
           ))}
+          {/* Measurements */}
           {measurements.map((m) => (
-            <MeasurementVisual
-              key={m.id}
-              measurement={m}
-              numQubits={numQubits}
-              onDelete={deleteMeasurement}
-            />
+            <SvgMeasurement key={m.id} measurement={m} numQubits={numQubits}
+              x={WIRE_PADDING + m.timestep * SLOT_SIZE} onDelete={deleteMeasurement} />
           ))}
-        </Layer>
-
-        {/* Layer 3: Single-qubit gates (draggable) */}
-        <Layer>
-          {Object.values(gates).map((gate) => (
-            <DraggableGate
-              key={gate.id}
-              gate={gate}
-              onDragEnd={handleGateDragEnd}
-              onDelete={deleteGate}
-              numQubits={numQubits}
-              numTimesteps={numTimesteps}
-            />
+          {/* Single gates */}
+          {Object.entries(gates).map(([key, gate]) => (
+            <SvgGate key={key} gate={gate} x={WIRE_PADDING + gate.timestep * SLOT_SIZE}
+              y={gate.qubit * SLOT_SIZE} onDelete={deleteGate} />
           ))}
-        </Layer>
-
-        {/* Layer 4: Gate palette (on the left side) */}
-        <Layer>
-          <Rect x={0} y={0} width={WIRE_PADDING - 5} height={canvasHeight} fill="#252525" />
-          <Text x={5} y={canvasHeight - 200} text="Drag gates:" fill="#888" fontSize={10} />
-          {['H', 'X', 'Y', 'Z'].map((gateType, idx) => (
-            <PaletteGate
-              key={gateType}
-              gateType={gateType}
-              x={5}
-              y={canvasHeight - 180 + idx * (GATE_SIZE + 5)}
-              onDragEnd={handlePaletteDragEnd}
-            />
-          ))}
-        </Layer>
-      </Stage>
-    </div>
+          {/* Pending multi-gate indicator */}
+          {pendingMultiGate && (
+            <circle cx={WIRE_PADDING + pendingMultiGate.timestep * SLOT_SIZE + SLOT_CENTER}
+              cy={pendingMultiGate.controls[0] * SLOT_SIZE + SLOT_CENTER} r={CONTROL_RADIUS + 2}
+              fill="none" stroke="#5599ff" strokeWidth={2} strokeDasharray="4 2">
+              <animate attributeName="stroke-dashoffset" from="0" to="12" dur="0.5s" repeatCount="indefinite" />
+            </circle>
+          )}
+        </svg>
+      </Box>
+    </Box>
   );
 }

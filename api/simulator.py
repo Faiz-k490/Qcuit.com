@@ -143,8 +143,18 @@ def run_simulation(
     """
     state = initialize_state(num_qubits)
 
+    # Gate type normalization map
+    gate_type_map = {
+        'S†': 'SDG', 'S\u2020': 'SDG', 'SDAGGER': 'SDG',
+        'T†': 'TDG', 'T\u2020': 'TDG', 'TDAGGER': 'TDG',
+        'CCX': 'CCNOT', 'TOFFOLI': 'CCNOT',
+        'CX': 'CNOT',
+        'M': 'MEASUREMENT',
+    }
+
     for step in circuit_steps:
-        gate_type = step["gateType"].upper()
+        raw_gate_type = step.get("gateType", "")
+        gate_type = gate_type_map.get(raw_gate_type.upper(), raw_gate_type.upper())
         involved_qubits_in_step: set[int] = set()
 
         if gate_type == "MEASUREMENT":

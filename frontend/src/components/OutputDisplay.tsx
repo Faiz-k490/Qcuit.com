@@ -37,34 +37,94 @@ export function OutputDisplay({
 
   // --- View 1: Histogram ---
   if (view === 'histogram') {
+    const hasResults = results && Object.keys(results.probabilities).length > 0;
+    
+    // Sort probabilities by value (descending) for better visualization
+    const sortedEntries = hasResults 
+      ? Object.entries(results.probabilities).sort(([, a], [, b]) => b - a)
+      : [];
+    
+    // Generate gradient colors based on probability
+    const generateColors = (probs: number[]) => {
+      return probs.map(p => {
+        const intensity = Math.max(0.4, p);
+        return `rgba(100, 181, 246, ${intensity})`;
+      });
+    };
+
     const chartData = {
-      labels: results ? Object.keys(results.probabilities) : [],
+      labels: sortedEntries.map(([label]) => `|${label}⟩`),
       datasets: [
         {
           label: 'Probability',
-          data: results ? Object.values(results.probabilities) : [],
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          data: sortedEntries.map(([, prob]) => prob),
+          backgroundColor: generateColors(sortedEntries.map(([, prob]) => prob)),
+          borderColor: 'rgba(100, 181, 246, 1)',
+          borderWidth: 1,
+          borderRadius: 4,
         },
       ],
     };
 
     return (
-      <Paper p="md" style={{ height: '100%', overflow: 'auto' }}>
-        <Text>Probabilities</Text>
-        <Box style={{ height: 'calc(100% - 30px)' }}>
-          <Bar
-            data={chartData}
-            options={{
-              maintainAspectRatio: false,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  max: 1,
+      <Paper p="md" style={{ height: '100%', overflow: 'auto', backgroundColor: '#1e1e1e' }}>
+        <Group justify="space-between" mb="sm">
+          <Text fw={600} c="white">Probabilities</Text>
+          {hasResults && (
+            <Badge variant="light" color="blue">
+              {sortedEntries.length} states
+            </Badge>
+          )}
+        </Group>
+        
+        {!hasResults ? (
+          <Box style={{ 
+            height: 'calc(100% - 50px)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: 8
+          }}>
+            <Text c="dimmed" size="sm">No simulation results yet</Text>
+            <Text c="dimmed" size="xs">Click "Simulate" to run the circuit</Text>
+          </Box>
+        ) : (
+          <Box style={{ height: 'calc(100% - 50px)' }}>
+            <Bar
+              data={chartData}
+              options={{
+                maintainAspectRatio: false,
+                indexAxis: sortedEntries.length > 8 ? 'y' : 'x',
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: (ctx) => `${(ctx.raw as number * 100).toFixed(2)}%`
+                    }
+                  }
                 },
-              },
-            }}
-          />
-        </Box>
+                scales: {
+                  x: {
+                    beginAtZero: true,
+                    max: sortedEntries.length > 8 ? 1 : undefined,
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#aaa' }
+                  },
+                  y: {
+                    beginAtZero: true,
+                    max: sortedEntries.length > 8 ? undefined : 1,
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { 
+                      color: '#aaa',
+                      callback: sortedEntries.length > 8 ? undefined : (value) => `${(value as number * 100).toFixed(0)}%`
+                    }
+                  },
+                },
+              }}
+            />
+          </Box>
+        )}
       </Paper>
     );
   }

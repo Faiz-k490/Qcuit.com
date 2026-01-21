@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, ReactNode, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CircuitState, GateInstance, MultiQubitGateInstance, Measurement, SimulationResult } from '../types';
 
@@ -10,6 +10,7 @@ type CircuitAction =
   | { type: 'ADD_GATE'; payload: GateInstance }
   | { type: 'MOVE_GATE'; payload: { gateId: string; newQubit: number; newTimestep: number } }
   | { type: 'DELETE_GATE'; payload: string }
+  | { type: 'UPDATE_GATE'; payload: { gateId: string; updates: Partial<GateInstance> } }
   | { type: 'ADD_MULTI_GATE'; payload: MultiQubitGateInstance }
   | { type: 'DELETE_MULTI_GATE'; payload: string }
   | { type: 'ADD_MEASUREMENT'; payload: Measurement }
@@ -122,6 +123,19 @@ function circuitReducer(state: CircuitState, action: CircuitAction): CircuitStat
       return { ...state, gates: newGates };
     }
 
+    case 'UPDATE_GATE': {
+      const { gateId, updates } = action.payload;
+      const newGates: Record<string, GateInstance> = {};
+      Object.entries(state.gates).forEach(([key, gate]) => {
+        if (gate.id === gateId) {
+          newGates[key] = { ...gate, ...updates };
+        } else {
+          newGates[key] = gate;
+        }
+      });
+      return { ...state, gates: newGates };
+    }
+
     case 'ADD_MULTI_GATE': {
       return {
         ...state,
@@ -184,6 +198,7 @@ interface CircuitContextType {
   addGate: (gate: Omit<GateInstance, 'id'>) => void;
   moveGate: (gateId: string, newQubit: number, newTimestep: number) => void;
   deleteGate: (gateId: string) => void;
+  updateGate: (gateId: string, updates: Partial<GateInstance>) => void;
   addMultiGate: (gate: Omit<MultiQubitGateInstance, 'id'>) => void;
   deleteMultiGate: (gateId: string) => void;
   addMeasurement: (measurement: Omit<Measurement, 'id'>) => void;
@@ -193,15 +208,54 @@ interface CircuitContextType {
   loadCircuit: (circuit: CircuitState) => void;
   runCircuit: () => Promise<void>;
   setResults: (results: SimulationResult | null) => void;
+  // Undo/Redo
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 const CircuitContext = createContext<CircuitContextType | null>(null);
+
+const MAX_HISTORY = 50;
 
 // Provider component
 export function CircuitProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(circuitReducer, initialState);
   const [results, setResults] = React.useState<SimulationResult | null>(null);
   const [isSimulating, setIsSimulating] = React.useState(false);
+  
+  // Undo/Redo history
+  const historyRef = useRef<CircuitState[]>([initialState]);
+  const historyIndexRef = useRef(0);
+  const [canUndo, setCanUndo] = React.useState(false);
+  const [canRedo, setCanRedo] = React.useState(false);
+  const skipHistoryRef = useRef(false);
+
+  // Save state to history after each action
+  const saveToHistory = useCallback((newState: CircuitState) => {
+    if (skipHistoryRef.current) {
+      skipHistoryRef.current = false;
+      return;
+    }
+    // Truncate any future history if we're not at the end
+    const newHistory = historyRef.current.slice(0, historyIndexRef.current + 1);
+    newHistory.push(newState);
+    // Limit history size
+    if (newHistory.length > MAX_HISTORY) {
+      newHistory.shift();
+    } else {
+      historyIndexRef.current++;
+    }
+    historyRef.current = newHistory;
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(false);
+  }, []);
+
+  // Track state changes for history
+  React.useEffect(() => {
+    saveToHistory(state);
+  }, [state, saveToHistory]);
 
   const addQubit = useCallback(() => {
     dispatch({ type: 'ADD_QUBIT' });
@@ -225,6 +279,10 @@ export function CircuitProvider({ children }: { children: ReactNode }) {
 
   const deleteGate = useCallback((gateId: string) => {
     dispatch({ type: 'DELETE_GATE', payload: gateId });
+  }, []);
+
+  const updateGate = useCallback((gateId: string, updates: Partial<GateInstance>) => {
+    dispatch({ type: 'UPDATE_GATE', payload: { gateId, updates } });
   }, []);
 
   const addMultiGate = useCallback((gate: Omit<MultiQubitGateInstance, 'id'>) => {
@@ -255,9 +313,30 @@ export function CircuitProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'LOAD_CIRCUIT', payload: circuit });
   }, []);
 
+  const undo = useCallback(() => {
+    if (historyIndexRef.current > 0) {
+      historyIndexRef.current--;
+      skipHistoryRef.current = true;
+      dispatch({ type: 'LOAD_CIRCUIT', payload: historyRef.current[historyIndexRef.current] });
+      setCanUndo(historyIndexRef.current > 0);
+      setCanRedo(true);
+    }
+  }, []);
+
+  const redo = useCallback(() => {
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      historyIndexRef.current++;
+      skipHistoryRef.current = true;
+      dispatch({ type: 'LOAD_CIRCUIT', payload: historyRef.current[historyIndexRef.current] });
+      setCanUndo(true);
+      setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+    }
+  }, []);
+
   // Run simulation via Flask backend
   const runCircuit = useCallback(async () => {
-    const API_URL = process.env.REACT_APP_API_URL || '/api/simulate';
+    // Use direct URL for development, proxy for production
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/simulate';
     setIsSimulating(true);
 
     try {
@@ -292,6 +371,7 @@ export function CircuitProvider({ children }: { children: ReactNode }) {
     addGate,
     moveGate,
     deleteGate,
+    updateGate,
     addMultiGate,
     deleteMultiGate,
     addMeasurement,
@@ -301,6 +381,10 @@ export function CircuitProvider({ children }: { children: ReactNode }) {
     loadCircuit,
     runCircuit,
     setResults,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   };
 
   return <CircuitContext.Provider value={value}>{children}</CircuitContext.Provider>;
