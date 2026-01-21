@@ -235,11 +235,15 @@ def dynamic():
 # Serve React App - catch-all route for client-side routing
 @app.route('/')
 def serve():
-    return send_from_directory(app.static_folder, 'index.html')
+    if app.static_folder and os.path.exists(os.path.join(app.static_folder, 'index.html')):
+        return send_from_directory(app.static_folder, 'index.html')
+    return jsonify({"status": "API running", "message": "Frontend build not found. Run 'npm run build' in frontend/"}), 200
 
 @app.errorhandler(404)
 def not_found(e):
-    return send_from_directory(app.static_folder, 'index.html')
+    if app.static_folder and os.path.exists(os.path.join(app.static_folder, 'index.html')):
+        return send_from_directory(app.static_folder, 'index.html')
+    return jsonify({"error": "Not found"}), 404
 
 
 if __name__ == "__main__":
