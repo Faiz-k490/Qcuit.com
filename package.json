@@ -1,0 +1,12 @@
+{
+  "name": "qcuit",
+  "version": "1.0.0",
+  "description": "Quantum Circuit Simulator",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "heroku-postbuild": "cd frontend && npm install && npm run build"
+  }
+}

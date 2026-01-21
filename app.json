@@ -1,0 +1,8 @@
+{
+  "name": "Qcuit",
+  "description": "Production-grade Quantum Circuit Simulator",
+  "buildpacks": [
+    { "url": "heroku/nodejs" },
+    { "url": "heroku/python" }
+  ]
+}

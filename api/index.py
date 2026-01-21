@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sys
 import os
@@ -10,7 +10,9 @@ from optimizer import optimize_circuit
 from transpiler import Transpiler, estimate_resources
 from dynamic_circuits import run_dynamic_simulation
 
-app = Flask(__name__)
+# Serve React build from frontend/build
+static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend', 'build')
+app = Flask(__name__, static_folder=static_folder, static_url_path='')
 
 
 def normalize_gate(gate):
@@ -228,6 +230,16 @@ def dynamic():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+
+# Serve React App - catch-all route for client-side routing
+@app.route('/')
+def serve():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.errorhandler(404)
+def not_found(e):
+    return send_from_directory(app.static_folder, 'index.html')
 
 
 if __name__ == "__main__":
