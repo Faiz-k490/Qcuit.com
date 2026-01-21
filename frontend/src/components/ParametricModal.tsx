@@ -1,6 +1,6 @@
 // In frontend/src/components/ParametricModal.tsx
 import { useState } from 'react';
-import { Modal, Button, Slider, Stack, Text, Box } from '@mantine/core';
+import { Button, Slider, Stack, Text, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 
 export const ParametricModal = ({

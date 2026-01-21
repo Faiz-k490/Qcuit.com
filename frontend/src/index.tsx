@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
-import App from './App';
+import App from './App.v3';
 import { ParametricModal } from './components/ParametricModal';
 
 // Import Mantine styles

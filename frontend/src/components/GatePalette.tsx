@@ -1,5 +1,5 @@
 // In frontend/src/components/GatePalette.tsx
-import { Paper, Group, Text, Accordion, Stack, Slider, Box, Center } from '@mantine/core';
+import { Paper, Group, Text, Accordion, Slider, Box, Center } from '@mantine/core';
 import { useDraggable } from '@dnd-kit/core';
 import { CircuitState } from '../types';
 
