@@ -1,9 +1,0 @@
-{
-  "buildCommand": "cd studio/frontend && npm install && npm run build",
-  "outputDirectory": "studio/frontend/build",
-  "framework": null,
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://YOUR-HEROKU-APP.herokuapp.com/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
