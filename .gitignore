@@ -2,9 +2,30 @@
 __pycache__/
 .venv/
 *.pyc
+*.egg-info/
+dist/
+*.egg
+
+# Environment & Secrets
+.env
+.env.local
+.env.production
+
+# Database
+*.db
+*.sqlite3
 
 # Node.js
 node_modules/
 npm-debug.log
 build/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

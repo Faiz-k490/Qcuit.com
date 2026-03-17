@@ -1,1 +1,1 @@
-web: gunicorn api.index:app
+web: PYTHONPATH=studio gunicorn api.index:app
