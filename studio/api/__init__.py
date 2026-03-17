@@ -47,28 +47,20 @@ def create_app(config_name=None):
     # ── Simulation API routes (preserved from original index.py) ──
     _register_simulation_routes(app)
 
-    # ── Catch-all for React client-side routing ──
+   # ── API Status Root ──
     @app.route('/')
-    def serve():
-        if app.static_folder and os.path.exists(
-            os.path.join(app.static_folder, 'index.html')
-        ):
-            return send_from_directory(app.static_folder, 'index.html')
+    def index():
         return jsonify({
-            'status': 'API running',
-            'message': "Frontend build not found. Run 'npm run build' in frontend/",
+            'status': 'QCuit API is Live',
+            'version': '2.0.0',
+            'environment': os.getenv('FLASK_ENV', 'production')
         }), 200
 
     @app.errorhandler(404)
     def not_found(e):
-        if app.static_folder and os.path.exists(
-            os.path.join(app.static_folder, 'index.html')
-        ):
-            return send_from_directory(app.static_folder, 'index.html')
-        return jsonify({'error': 'Not found'}), 404
+        return jsonify({'error': 'Resource not found on API'}), 404
 
     return app
-
 
 def _register_simulation_routes(app):
     """Register the original quantum simulation API routes on the app."""
