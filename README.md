@@ -1,25 +1,40 @@
+<div align="center">
+
 # Qcuit
 
-> Write quantum code in plain English. Built on Qiskit. 100% open source.
+*Write quantum circuits in plain English. Simulate them in your browser. Learn as you build.*
 
-**Website:** [qcuit.com](https://qcuit.com) · **PyPI:** [pypi.org/project/qcuit](https://pypi.org/project/qcuit) · **GitHub:** [Faiz-k490/Qcuit.com](https://github.com/Faiz-k490/Qcuit.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-C5A059.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-0A1F1C.svg)](https://python.org)
+[![Website](https://img.shields.io/badge/qcuit.com-live-C5A059.svg)](https://qcuit.com)
+
+[Website](https://qcuit.com) · [PyPI](https://pypi.org/project/qcuit) · [GitHub](https://github.com/Faiz-k490/Qcuit.com)
+
+</div>
 
 ---
 
-## Repository
+Qcuit is an open-source platform for quantum computing education. It pairs a Python library that reads like English with a browser-based circuit studio — drag gates, see probabilities, export production code. Every piece is designed so that a student encountering quantum mechanics for the first time can follow along without prior knowledge, and a researcher can still find it useful.
 
-| Directory | What | Docs |
-|-----------|------|------|
-| [`library/`](library/) | Python package (`pip install qcuit`) | [README](library/README.md) · [CONTRIBUTING](library/CONTRIBUTING.md) |
-| [`studio/`](studio/) | Web app — circuit builder, simulator, AI tutor | [README](studio/README.md) |
-| [`journal/`](journal/) | Article drafts & publishing tools | [README](journal/README.md) |
-| [`docs/`](docs/) | Architecture, deployment, API reference | [ARCHITECTURE](docs/ARCHITECTURE.md) · [DEPLOYMENT](docs/DEPLOYMENT.md) · [API](docs/API_REFERENCE.md) |
+## Reading Order
+
+The repository is structured so you can read it front to back. Each layer builds on the one before it.
+
+| # | Directory | Purpose | Start here |
+|---|-----------|------------|------------|
+| I | [`docs/`](docs/) | Architecture, deployment guide, API reference | [ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| II | [`library/`](library/) | The core Python package — `pip install qcuit` | [README](library/README.md) |
+| III | [`studio/`](studio/) | Web application: circuit builder, simulator, AI tutor | [README](studio/README.md) |
+| IV | [`journal/`](journal/) | Article drafts and publishing tools | [README](journal/README.md) |
+| V | [`scripts/`](scripts/) | Developer setup and utilities | [setup_dev.sh](scripts/setup_dev.sh) |
+
+**`docs/`** explains how everything fits together. **`library/`** is the foundation — a small Python package where `Qubit`, `Circuit`, and `Apply` are the only three concepts you need. **`studio/`** wraps that foundation in a visual interface: a Flask backend handles simulation, a React frontend handles the circuit canvas. **`journal/`** is the content layer — Markdown articles published to the Q-Hub. **`scripts/`** ties it all together for local development.
 
 ---
 
 ## Quick Start
 
-### Python Library
+### The Python Library
 
 ```bash
 pip install qcuit
@@ -38,18 +53,20 @@ circ.measure_all()
 print(run_simulation(circ))  # {"00": ~512, "11": ~512}
 ```
 
-### Studio (Local Development)
+Three classes. One import. A Bell state in six lines.
+
+### The Studio
 
 ```bash
-bash scripts/setup_dev.sh        # One-command setup
+# One-command setup (installs Python + Node dependencies, creates .env)
+bash scripts/setup_dev.sh
 
-# Or manually:
-pip install -r studio/requirements.txt
-cd studio && PYTHONPATH=. python3 api/index.py   # Backend :5001
-cd studio/frontend && npm start                   # Frontend :3000
+# Then in two terminals:
+cd studio && PYTHONPATH=. python3 api/index.py    # Backend on :5001
+cd studio/frontend && npm start                    # Frontend on :3000
 ```
 
-### Publish an Article
+### Publishing an Article
 
 ```bash
 PYTHONPATH=studio python3 journal/scripts/publish_article.py \
@@ -59,21 +76,59 @@ PYTHONPATH=studio python3 journal/scripts/publish_article.py \
 
 ---
 
+## Architecture
+
+```text
+Qcuit.com/
+├── library/             Python package (pip install qcuit)
+│   ├── qcuit/           core.py · gates.py · backend.py
+│   ├── examples/
+│   └── pyproject.toml
+│
+├── studio/              Web application
+│   ├── api/             Flask backend — simulation, auth, AI tutor
+│   │   ├── kernels/     Statevector engine, noise model, Clifford
+│   │   ├── optimizer/   DAG-based gate cancellation + merging
+│   │   ├── transpiler/  SABRE routing for hardware topologies
+│   │   └── routes/      Auth, blog, agent endpoints
+│   └── frontend/        React — circuit canvas, Q-Sphere, Bloch sphere
+│       └── src/
+│           ├── pages/       Landing, Studio, Journal, Docs, Exploratorium
+│           ├── components/  CircuitCanvas, QSphere, BlochSphere, TutorChat
+│           └── store/       CircuitContext (React Context)
+│
+├── journal/             Article management
+│   ├── drafts/          Markdown drafts + template
+│   └── scripts/         publish_article.py CLI
+│
+├── docs/                Architecture, deployment, API reference
+├── scripts/             setup_dev.sh
+└── Procfile             Heroku (backend)
+```
+
+The simulation pipeline: the frontend sends a circuit description via `POST /api/simulate`. The backend normalizes gate formats, selects a kernel (statevector for small circuits, Clifford for stabilizer circuits), optionally applies noise, generates equivalent code in Qiskit/Braket/OpenQASM, and returns probabilities alongside exportable source.
+
+For a deeper walkthrough, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
+
 ## Deployment
 
-- **Backend:** Heroku — `Procfile` at repo root
-- **Frontend:** Vercel — `vercel.json` at repo root
-- **Secrets:** All API keys via environment variables (never in code)
+The backend runs on Heroku. The frontend is served by Vercel. All secrets live in environment variables — nothing is committed to the repository.
 
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for step-by-step instructions.
+| Component | Platform | Config |
+|-----------|----------|--------|
+| Backend | Heroku | `Procfile` at repo root |
+| Frontend | Vercel | Configured in dashboard |
+| Database | SQLite (dev) / Postgres (prod) | Automatic via `DATABASE_URL` |
+
+Step-by-step instructions: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
 ## Contributing
 
-**Want to add gates to the Python library?** See [library/CONTRIBUTING.md](library/CONTRIBUTING.md).
-
-**Want to improve the Studio?** See [studio/README.md](studio/README.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. The short version:
 
 ```bash
 git clone https://github.com/Faiz-k490/Qcuit.com.git
@@ -81,12 +136,15 @@ cd Qcuit.com
 bash scripts/setup_dev.sh
 ```
 
+To add a quantum gate to the Python library, see [library/CONTRIBUTING.md](library/CONTRIBUTING.md).
+To improve the Studio interface, see [studio/README.md](studio/README.md).
+
 ---
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ---
 
-Built by [Faizan](https://github.com/Faiz-k490)
+Built by [Faizan](https://github.com/Faiz-k490).

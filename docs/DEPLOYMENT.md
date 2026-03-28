@@ -3,7 +3,7 @@
 ## Overview
 
 - **Backend:** Heroku (Flask API)
-- **Frontend:** Vercel (React build)
+- **Frontend:** Vercel (React build configured in dashboard)
 - **Database:** SQLite (dev) / Heroku Postgres (production)
 
 ---
@@ -74,19 +74,7 @@ curl https://YOUR-APP.herokuapp.com/api/simulate \
    - **Output Directory:** `studio/frontend/build`
    - **Root Directory:** `.` (repo root)
 
-3. Or use `vercel.json` (already created at repo root):
-```json
-{
-  "buildCommand": "cd studio/frontend && npm install && npm run build",
-  "outputDirectory": "studio/frontend/build",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://YOUR-HEROKU-APP.herokuapp.com/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-```
-
-4. **Update the Heroku URL** in `vercel.json` to match your actual Heroku app name.
+3. Ensure the Vercel app's proxy settings are active for your backend, or configure rewrites within Vercel's Edge config.
 
 ### Deploy
 
@@ -143,7 +131,7 @@ heroku logs --tail   # Check for Python import errors
 Common fix: ensure `PYTHONPATH=studio` is in Procfile.
 
 ### API calls fail on Vercel
-- Check that `vercel.json` has the correct Heroku URL
+- Check that Vercel is proxies the `/api/*` endpoints to your Heroku app URLs
 - Check Heroku logs for 500 errors
 
 ### Gemini Tutor returns 503

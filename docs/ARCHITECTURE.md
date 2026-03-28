@@ -25,11 +25,12 @@ Qcuit.com/
 │   ├── qcuit/         # Source: core.py, gates.py, backend.py
 │   ├── examples/      # Usage examples
 │   └── pyproject.toml # Package config
+│
 ├── studio/            # Web application
-│   ├── api/           # Flask backend
-│   └── frontend/      # React frontend
+│   ├── frontend/      # React SPA
+│   └── api/           # Flask backend
 ├── journal/           # Article management
-│   ├── drafts/        # Markdown drafts
+│   ├── drafts/        # Markdown articles
 │   └── scripts/       # Publishing tools
 ├── docs/              # Documentation
 ├── Procfile           # Heroku deployment
