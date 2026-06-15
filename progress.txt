@@ -1,0 +1,78 @@
+Qcuit v2 — Phase rollout log
+
+Phase 3 — Reproducibility Index — Live
+  - SHA-256 canonical-hash store under studio/data/notebook/<hash>.json
+  - Library mirror in library/qcuit/io/notebook.py (single source of truth)
+  - Blueprint /api/notebook/{run, <hash>, <hash>/bibtex, gallery}
+  - 10-entry curated benchmark gallery
+  - Lab tab notebook flipped to Live with Recent / Gallery / Inspector views
+  - Save as Notebook button in Studio (App.v5)
+  - Permalink route /n/<hash> opens artifact in read-only Studio shell
+  - 10 pytest tests passing
+
+Phase 4 — Curriculum — Live
+  - Lesson schema (content/lessons/types.ts) with track/order/sections/widgets
+  - CourseEngine (sidebar tracks, progress checkmarks, Read·Watch·Do)
+  - 3 new widgets: RotationSlider, BellPairBuilder, MeasurementHistogram
+  - 12 core lessons (full prose): Why quantum → Qubit/Bloch → Gates → Superposition
+    → Two-qubit entanglement → CNOT → GHZ → Phase/interference → Deutsch–Jozsa
+    → Grover → QFT → Noise
+  - 5 QML lessons (full prose): Neural→Quantum, Encoding, Ansätze, Training loops,
+    Parity classifier
+  - Exploratorium body replaced with CourseEngine
+  - Manifest test: 5 jest assertions (uniqueness, dense order, prereq resolution,
+    counts) — all passing
+  - Production build green (+19.32 kB gz)
+
+Phase 5 — Differentiable Simulator — Live
+  - api.diffsim: parameter-shift autograd over the statevector kernel
+  - SGD + Adam optimisers, VQE-H2 / QAOA-MaxCut / Bloch-fit presets
+  - Blueprint /api/trainer/{preset, run} with SSE streaming
+  - TrainerPanel UI (live cost curve + grad-norm + iteration log)
+  - pytest coverage for parameter-shift exactness, presets, route
+
+Phase 6 — QNN Studio — Live
+  - api.qnn: angle / amplitude / ZZ-feature-map encoders;
+    real-amplitudes + hardware-efficient ansätze
+  - Datasets: XOR, parity, two-moons, blobs
+  - QNNModel + qnn_train; PennyLane / Qiskit-ML exports
+  - Blueprint /api/qnn/{preset, run, export}
+  - QNNPanel UI (preset → train → export)
+  - pytest coverage for encoders, training convergence, exports
+
+Phase 7 — QEC Sandbox — Live
+  - api.qec: repetition-3, Steane-7, Shor-9, Surface d=3 (Surface-17)
+  - ErrorPattern, syndrome_for, apply_recovery, is_logical_error
+  - Lookup decoder + greedy surface matcher with lookup fallback
+  - Blueprint /api/qec/{codes, code, syndrome, decode, run}
+  - QECPanel UI: SVG lattice, click-to-cycle Pauli, live syndrome lights,
+    recovery dashed rings, success / logical-error verdict
+  - Library mirror qcuit.qec
+  - 13 pytest tests (single-error correction across all codes, logical-error
+    detection, all HTTP endpoints) — all passing
+
+Phase 8 — Pulse Lab — Live
+  - api.pulse: RK4 TDSE integrator in the rotating frame
+  - Envelopes: square, gaussian, DRAG; pulse_area + π / √X calibration
+  - Presets: Rabi oscillation, gaussian π-pulse, DRAG √X pulse
+  - Blueprint /api/pulse/{presets, preset, simulate, calibrate}
+  - PulsePanel UI: Bloch (X-Z) projection + ⟨X,Y,Z⟩(t) plot + final-state
+  - Library mirror qcuit.pulse
+  - 15 pytest tests (π-pulse fidelity > 0.999, √X equator landing, full Rabi
+    cycle, determinism, all HTTP endpoints) — all passing
+
+Phase 2 — Noise Lab — Live
+  - api.noise.channels: depolarising, amplitude / phase damping Kraus ops,
+    readout assignment matrix; trace-preservation guarantee
+  - api.noise.calibration: JSON snapshots discovered at studio/data/noise/*.json
+    (IBM Brisbane, IonQ Aria, Quantinuum H1 fixtures shipped)
+  - api.noise.budget: per-channel error accounting (1q / 2q / decoherence /
+    readout), F ≈ exp(-Σ ε), fidelity-vs-depth sweep
+  - Blueprint /api/noise/{snapshots, snapshot, apply, fidelity-curve}
+  - NoisePanel UI: snapshot picker, stacked error-budget bar, fidelity-vs-depth
+    chart, per-qubit T1/T2/readout table, 2q-edge breakdown
+  - Library mirror qcuit.noise
+  - 31 pytest tests (trace preservation across all channels, snapshot loader,
+    budget monotonicity, all HTTP endpoints) — all passing
+
+Aggregate: 124 pytest tests passing across the full api/ tree.

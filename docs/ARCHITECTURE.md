@@ -5,16 +5,17 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Qcuit Platform                        │
-├──────────────┬──────────────────┬───────────────────────┤
-│   Library    │     Studio       │      Journal          │
-│  (Python)    │  (Web App)       │   (Content)           │
-│              │                  │                       │
-│  qcuit/      │  Flask API ←→    │  SQLite/Postgres DB   │
-│  - core.py   │  React Frontend  │  Markdown articles    │
-│  - gates.py  │  - Circuit UI    │  publish_article.py   │
-│  - backend.py│  - Simulation    │                       │
-│              │  - AI Tutor      │                       │
-└──────────────┴──────────────────┴───────────────────────┘
+├────────────────────────────┬────────────────────────────┤
+│   Library                  │   Browser Companion        │
+│  (Python package)          │  (Website + Visualizer)    │
+│                            │                            │
+│  qcuit/                    │  React Frontend            │
+│  - core.py                 │  - Landing + Docs          │
+│  - hep/                    │  - Learn                   │
+│  - models/                 │  - Visualizer              │
+│  - quantum/                │  - QML Lab                 │
+│  - benchmarks.py           │  Flask API for local tools │
+└────────────────────────────┴────────────────────────────┘
 ```
 
 ## Repository Structure
@@ -26,13 +27,10 @@ Qcuit.com/
 │   ├── examples/      # Usage examples
 │   └── pyproject.toml # Package config
 │
-├── studio/            # Web application
+├── website/            # Web application
 │   ├── frontend/      # React SPA
 │   └── api/           # Flask backend
-├── journal/           # Article management
-│   ├── drafts/        # Markdown articles
-│   └── scripts/       # Publishing tools
-├── docs/              # Documentation
+├── docs/              # Documentation + historical archive
 ├── Procfile           # Heroku deployment
 └── vercel.json        # Vercel deployment
 ```
@@ -41,12 +39,12 @@ Qcuit.com/
 
 ### App Factory Pattern
 
-`studio/api/__init__.py` → `create_app()` builds the Flask app:
+`website/api/__init__.py` → `create_app()` builds the Flask app:
 
 1. Load config from environment (`development` / `production`)
 2. Initialize CORS
 3. Initialize SQLAlchemy (if DB URI configured)
-4. Register Blueprints: `auth_bp`, `blog_bp`, `user_bp`, `agent_bp`
+4. Register Blueprints for auth, simulation, notebooks, QML trainers, QNNs, QEC, noise, and pulse tools
 5. Register simulation routes via `_register_simulation_routes(app)`
 6. Add catch-all for React client-side routing
 
@@ -75,14 +73,7 @@ JSON response             # {probabilities, code}
 **Users** — JWT auth, role-based access
 - `id`, `username`, `email`, `password_hash`, `role` (user/admin)
 
-**BlogPost** — Journal articles
-- `id`, `title`, `slug`, `content`, `abstract`
-- `author_name`, `author_affiliation`, `category`, `topics`
-- `status` (draft/pending/published), `published_at`
-
-**Post** — Legacy posts table (unused)
-
-**Comment** — Threaded comments on articles
+Legacy blog and comment tables may exist in older deployments, but they are not part of the active public QML-library frontend.
 
 ## Frontend (React)
 
@@ -93,12 +84,13 @@ JSON response             # {probabilities, code}
 | Path | Component | Description |
 |------|-----------|-------------|
 | `/` | `LandingPage` | Homepage |
-| `/simulator` | `App.v5` | Studio |
-| `/hub` | `QHub` | Journal |
+| `/simulator` | `App.v5` | Legacy alias for the Visualizer |
+| `/visualizer` | `App.v5` | Circuit visualizer |
 | `/docs` | `Documentation` | Docs |
 | `/explore` | `Exploratorium` | Learning |
+| `/lab` | `Lab` | QML Lab |
 
-### Studio Layout (App.v5.tsx)
+### Visualizer Layout (App.v5.tsx)
 
 ```
 ┌──────────────────────────────────────┐

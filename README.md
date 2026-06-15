@@ -2,7 +2,7 @@
 
 # Qcuit
 
-*Write quantum circuits in plain English. Simulate them in your browser. Learn as you build.*
+*Open-source Python tooling for quantum ML, Lorentz-aware HEP workflows, and reproducible benchmarks.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-C5A059.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-0A1F1C.svg)](https://python.org)
@@ -14,21 +14,20 @@
 
 ---
 
-Qcuit is an open-source platform for quantum computing education. It pairs a Python library that reads like English with a browser-based circuit studio — drag gates, see probabilities, export production code. Every piece is designed so that a student encountering quantum mechanics for the first time can follow along without prior knowledge, and a researcher can still find it useful.
+Qcuit is a pip-first quantum ML toolkit. The active project centers on importable Python modules for readable circuits, HEP jet graph workflows, Lorentz-aware models, hybrid quantum layers, and benchmark reports. The browser app is optional support for docs, teaching, visualization, and local checks.
 
-## Reading Order
+## Project Surfaces
 
-The repository is structured so you can read it front to back. Each layer builds on the one before it.
+Open the repo with this mental model:
 
-| # | Directory | Purpose | Start here |
-|---|-----------|------------|------------|
-| I | [`docs/`](docs/) | Architecture, deployment guide, API reference | [ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-| II | [`library/`](library/) | The core Python package — `pip install qcuit` | [README](library/README.md) |
-| III | [`studio/`](studio/) | Web application: circuit builder, simulator, AI tutor | [README](studio/README.md) |
-| IV | [`journal/`](journal/) | Article drafts and publishing tools | [README](journal/README.md) |
-| V | [`scripts/`](scripts/) | Developer setup and utilities | [setup_dev.sh](scripts/setup_dev.sh) |
+| Surface | Directory | Role |
+|---------|-----------|------|
+| Python package | [`library/`](library/) | The product: `qcuit`, HEP data, models, quantum layers, benchmarks |
+| Browser companion | [`website/`](website/) | Website, docs UI, visualizer, QML Lab, local API helpers |
+| Contributor docs | [`docs/`](docs/) | Architecture, repo map, deployment, historical archive |
+| Developer scripts | [`scripts/`](scripts/) | Local bootstrap utilities |
 
-**`docs/`** explains how everything fits together. **`library/`** is the foundation — a small Python package where `Qubit`, `Circuit`, and `Apply` are the only three concepts you need. **`studio/`** wraps that foundation in a visual interface: a Flask backend handles simulation, a React frontend handles the circuit canvas. **`journal/`** is the content layer — Markdown articles published to the Q-Hub. **`scripts/`** ties it all together for local development.
+If a change affects importable research behavior, start in `library/`. If it only helps explain, teach, visualize, or locally inspect the library, start in `website/`. Retired content lives only in `docs/_archive/`.
 
 ---
 
@@ -55,53 +54,53 @@ print(run_simulation(circ))  # {"00": ~512, "11": ~512}
 
 Three classes. One import. A Bell state in six lines.
 
-### The Studio
+### HEP / QML Benchmark
 
 ```bash
-# One-command setup (installs Python + Node dependencies, creates .env)
-bash scripts/setup_dev.sh
-
-# Then in two terminals:
-cd studio && PYTHONPATH=. python3 api/index.py    # Backend on :5001
-cd studio/frontend && npm start                    # Frontend on :3000
+cd library
+pip install -e ".[hep,qml,dev]"
+qcuit-lie-eqgnn-demo --epochs 10 --backend torch
 ```
 
-### Publishing an Article
+### Optional Browser Companion
 
 ```bash
-PYTHONPATH=studio python3 journal/scripts/publish_article.py \
-  --draft journal/drafts/my-article.md \
-  --title "My Article" --category Tutorial
+make frontend
 ```
 
----
+Then open `http://localhost:3001`. The public information architecture is:
+
+```text
+/          Package landing page for QML researchers
+/docs      Install guide and API reference
+/explore   Guided lessons
+/visualizer Optional circuit visualizer
+/lab       Browser companion for QML checks
+```
 
 ## Architecture
 
 ```text
 Qcuit.com/
 ├── library/             Python package (pip install qcuit)
-│   ├── qcuit/           core.py · gates.py · backend.py
+│   ├── qcuit/           core.py · hep/ · models/ · quantum/ · benchmarks.py
 │   ├── examples/
 │   └── pyproject.toml
 │
-├── studio/              Web application
-│   ├── api/             Flask backend — simulation, auth, AI tutor
+├── website/              Browser companion
+│   ├── api/             Backend routes — simulation, notebooks, QNN, QEC
 │   │   ├── kernels/     Statevector engine, noise model, Clifford
 │   │   ├── optimizer/   DAG-based gate cancellation + merging
 │   │   ├── transpiler/  SABRE routing for hardware topologies
-│   │   └── routes/      Auth, blog, agent endpoints
-│   └── frontend/        React — circuit canvas, Q-Sphere, Bloch sphere
+│   │   └── routes/      Simulation, trainer, noise, QNN, QEC, pulse
+│   └── frontend/        React — package site, docs, visualizer, lab
 │       └── src/
-│           ├── pages/       Landing, Studio, Journal, Docs, Exploratorium
-│           ├── components/  CircuitCanvas, QSphere, BlochSphere, TutorChat
+│           ├── pages/       Landing, Docs, Learn, Visualizer, QML Lab
+│           ├── components/  CircuitCanvas, QSphere, BlochSphere, Explainer
 │           └── store/       CircuitContext (React Context)
 │
-├── journal/             Article management
-│   ├── drafts/          Markdown drafts + template
-│   └── scripts/         publish_article.py CLI
-│
-├── docs/                Architecture, deployment, API reference
+├── docs/                Architecture, deployment, repo map
+│   └── _archive/        Retired notes, old journal frontend, historical docs
 ├── scripts/             setup_dev.sh
 └── Procfile             Heroku (backend)
 ```
@@ -128,16 +127,17 @@ Step-by-step instructions: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. The short version:
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/REPO_MAP.md](docs/REPO_MAP.md) for the full guide. The short version:
 
 ```bash
 git clone https://github.com/Faiz-k490/Qcuit.com.git
 cd Qcuit.com
-bash scripts/setup_dev.sh
+make help
+make verify
 ```
 
-To add a quantum gate to the Python library, see [library/CONTRIBUTING.md](library/CONTRIBUTING.md).
-To improve the Studio interface, see [studio/README.md](studio/README.md).
+`make verify` runs library tests, Flask/API tests, and a production frontend build.
+To add Python library features, see [library/CONTRIBUTING.md](library/CONTRIBUTING.md). To improve the visualizer or website, start in `website/frontend/src/`.
 
 ---
 

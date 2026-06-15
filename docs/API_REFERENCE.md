@@ -1,6 +1,35 @@
 # Qcuit API Reference
 
-Base URL: `https://YOUR-HEROKU-APP.herokuapp.com` (production) or `http://localhost:5001` (dev)
+Base URL: `http://localhost:5001` for local development. The React app on
+`http://localhost:3001` proxies `/api/*` requests to that backend through
+`website/frontend/package.json`.
+
+---
+
+## Local Health
+
+### GET `/health`
+
+Use this before debugging the frontend. If this endpoint is not reachable, the
+visualizer cannot connect to the backend.
+
+**Response (200):**
+```json
+{
+  "status": "ok",
+  "service": "qcuit-api",
+  "version": "2.0.0",
+  "environment": "development"
+}
+```
+
+### Local smoke commands
+
+```bash
+make backend
+curl -sS http://localhost:5001/health
+curl -sS http://localhost:5001/api/health
+```
 
 ---
 
@@ -16,10 +45,10 @@ Run a quantum circuit simulation.
   "numQubits": 2,
   "numClassical": 2,
   "gates": {
-    "q_0-0": { "id": "h1", "gateType": "H", "qubit": 0, "timestep": 0 }
+    "h-0-0": { "id": "h-0-0", "gateType": "H", "target": 0, "timestep": 0 }
   },
   "multiQubitGates": [
-    { "id": "cx1", "gateType": "CNOT", "controls": [0], "targets": [1], "timestep": 1 }
+    { "id": "cx1", "gateType": "CNOT", "control": 0, "target": 1, "timestep": 1 }
   ],
   "measurements": [],
   "noiseLevel": 0
@@ -33,10 +62,15 @@ Run a quantum circuit simulation.
   "code": {
     "qiskit": "from qiskit import QuantumCircuit...",
     "braket": "from braket.circuits import Circuit...",
-    "openqasm": "OPENQASM 2.0;..."
+    "openqasm": "OPENQASM 3.0;..."
   }
 }
 ```
+
+The backend also accepts normalized payloads with `qubit`, `controls`, and
+`targets`. The frontend often sends `target`/`control`; the API normalizes that
+shape before simulation, code export, optimization, transpilation, and resource
+estimation.
 
 ### POST `/api/statevector`
 
@@ -46,7 +80,7 @@ Get statevector and Q-Sphere data.
 ```json
 {
   "numQubits": 2,
-  "gates": { "q_0-0": { "id": "h1", "gateType": "H", "qubit": 0, "timestep": 0 } },
+  "gates": { "h-0-0": { "id": "h1", "gateType": "H", "target": 0, "timestep": 0 } },
   "multiQubitGates": []
 }
 ```
@@ -125,6 +159,20 @@ Estimate hardware resources.
 }
 ```
 
+**Response (200):**
+```json
+{
+  "backend": "ibm_brisbane",
+  "num_qubits": 5,
+  "gate_count": 7,
+  "single_qubit_gates": 5,
+  "two_qubit_gates": 2,
+  "estimated_time_ns": 780,
+  "estimated_fidelity": 0.98,
+  "circuit_depth": 4
+}
+```
+
 ### POST `/api/dynamic`
 
 Run a dynamic circuit with mid-circuit measurement.
@@ -150,70 +198,41 @@ Run a dynamic circuit with mid-circuit measurement.
 }
 ```
 
----
+## Deterministic Circuit Explainer
 
-## AI Tutor
+### POST `/api/explain`
 
-### POST `/api/agent/tutor`
-
-Chat with the Gemini-powered quantum tutor.
+Analyze the current circuit without an external AI service. This endpoint is
+pure Python, deterministic, and local-only.
 
 **Request:**
 ```json
 {
-  "message": "What is superposition?",
-  "circuit_context": {
-    "numQubits": 2,
-    "gates": { ... }
-  }
+  "numQubits": 2,
+  "numClassical": 2,
+  "gates": { "h-0-0": { "id": "h-0-0", "gateType": "H", "target": 0, "timestep": 0 } },
+  "multiQubitGates": [
+    { "id": "cx1", "gateType": "CNOT", "control": 0, "target": 1, "timestep": 1 }
+  ]
 }
 ```
 
 **Response (200):**
 ```json
 {
-  "response": "Superposition is a fundamental quantum principle...",
-  "qcuit_code": "from qcuit import ..."
+  "verdict": "2-qubit entangled state",
+  "columns": [ ... ],
+  "entanglement_edges": [ ... ],
+  "top_outcomes": [ ... ]
 }
 ```
-
-**Response (503):** Gemini API key not configured.
 
 ---
 
-## Journal
+## Legacy content endpoints
 
-### GET `/api/posts`
-
-List published articles.
-
-**Query params:** `page` (default 1), `per_page` (default 10), `category`, `topic`
-
-**Response (200):**
-```json
-{
-  "posts": [
-    {
-      "id": 3,
-      "title": "Understanding Noise-Aware Circuits",
-      "slug": "understanding-noise-aware-circuits",
-      "abstract": "A brief introduction...",
-      "author": { "name": "Faizan", "affiliation": "Qcuit" },
-      "category": "Tutorial",
-      "topics": ["noise", "circuits"],
-      "reading_time": 1,
-      "published_at": "2026-03-17T06:08:37"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "pages": 1
-}
-```
-
-### GET `/api/posts/<slug>`
-
-Get a single article by slug.
+Older deployments may still expose `/api/posts`, but the active public frontend now routes people
+to the library docs, Learn, Visualizer, and QML Lab instead of a publishing surface.
 
 ---
 

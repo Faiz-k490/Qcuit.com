@@ -8,14 +8,20 @@ Brief description of what this PR does and why.
 -
 -
 
+## Surface
+
+- [ ] Python package (`library/`)
+- [ ] Website / visualizer / QML Lab (`website/`)
+- [ ] Docs / repo hygiene (`docs/`, `README.md`, `CONTRIBUTING.md`)
+
 ## Testing
 
 Describe how you verified this works:
 
-- [ ] Ran `bash scripts/setup_dev.sh` successfully
-- [ ] Backend starts without errors
-- [ ] Frontend builds and renders correctly
-- [ ] Relevant existing functionality still works
+- [ ] `make library-test`
+- [ ] `make backend-test`
+- [ ] `make frontend-build`
+- [ ] Other:
 
 ## Related Issues
 

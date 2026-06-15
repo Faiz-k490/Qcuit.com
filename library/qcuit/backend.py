@@ -24,11 +24,8 @@ from __future__ import annotations
 
 from typing import Dict
 
-# Qiskit imports - these are the only external dependencies of the library.
-from qiskit import QuantumCircuit, transpile
-from qiskit_aer import AerSimulator
-
 # Internal imports
+from qcuit._optional import missing_extra
 from qcuit.core import Circuit, QcuitError
 from qcuit.gates import Apply, CNOT, Hadamard, PauliX
 
@@ -80,6 +77,11 @@ def run_simulation(circuit_instance: Circuit, shots: int = 1024) -> Dict[str, in
         results = run_simulation(circ)
         print(results)  # e.g. {"00": 507, "11": 517}
     """
+    try:
+        from qiskit import QuantumCircuit, transpile
+        from qiskit_aer import AerSimulator
+    except ImportError as exc:
+        raise missing_extra("qiskit/qiskit-aer", "qiskit", "Qcuit circuit simulation") from exc
 
     # ===================================================================
     # STEP 1 : Validate the circuit before we do any Qiskit work.

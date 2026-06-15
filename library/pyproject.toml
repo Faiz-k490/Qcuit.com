@@ -5,33 +5,97 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "qcuit"
 version = "0.1.0"
-description = "The most beginner-friendly quantum computing library. Write quantum programs in plain English."
-readme = "README.md"
-license = {text = "MIT"}
+description = "Pip-first quantum ML tooling for HEP jet graphs, Lorentz-aware models, QNNs, and readable circuits."
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "MIT"
 requires-python = ">=3.10"
 authors = [
     {name = "Qcuit Team"},
 ]
-keywords = ["quantum", "computing", "qiskit", "beginner", "education"]
+maintainers = [
+    {name = "Faizan"},
+]
+keywords = [
+    "quantum",
+    "qml",
+    "quantum-machine-learning",
+    "hep",
+    "high-energy-physics",
+    "lorentz",
+    "equivariant",
+    "graph-neural-network",
+    "jet-tagging",
+    "particle-physics",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
 dependencies = [
+    "numpy>=1.23",
+]
+
+[project.optional-dependencies]
+qiskit = [
     "qiskit>=1.0.0",
     "qiskit-aer>=0.13.0",
+]
+hep = [
+    "torch>=2.0",
+    "scipy>=1.10",
+    "scikit-learn>=1.2",
+]
+hep-io = [
+    "uproot>=5.0",
+    "awkward>=2.0",
+    "h5py>=3.8",
+]
+pyg = [
+    "torch-geometric>=2.4",
+]
+qml = [
+    "pennylane>=0.35",
+]
+dev = [
+    "pytest>=7.0",
+    "build>=1.0",
+]
+all = [
+    "qiskit>=1.0.0",
+    "qiskit-aer>=0.13.0",
+    "torch>=2.0",
+    "scipy>=1.10",
+    "scikit-learn>=1.2",
+    "uproot>=5.0",
+    "awkward>=2.0",
+    "h5py>=3.8",
+    "torch-geometric>=2.4",
+    "pennylane>=0.35",
 ]
 
 [project.urls]
 Homepage = "https://qcuit.com"
-Repository = "https://github.com/qcuit/qcuit"
+Documentation = "https://qcuit.com/docs"
+Repository = "https://github.com/Faiz-k490/Qcuit.com"
+Issues = "https://github.com/Faiz-k490/Qcuit.com/issues"
+Source = "https://github.com/Faiz-k490/Qcuit.com/tree/main/library"
+
+[project.scripts]
+qcuit-lie-eqgnn-demo = "qcuit.cli:lie_eqgnn_demo"
 
 [tool.setuptools.packages.find]
 include = ["qcuit*"]
+
+[tool.setuptools.package-data]
+qcuit = ["py.typed"]

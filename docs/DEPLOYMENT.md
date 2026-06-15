@@ -27,7 +27,6 @@ heroku git:remote -a YOUR-APP
 # Set environment variables
 heroku config:set SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
 heroku config:set JWT_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
-heroku config:set GEMINI_API_KEY=your-gemini-api-key
 heroku config:set FLASK_ENV=production
 
 # Add Postgres addon (optional — replaces SQLite)
@@ -37,17 +36,17 @@ heroku addons:create heroku-postgresql:essential-0
 git push heroku main
 
 # Initialize database tables
-heroku run "PYTHONPATH=studio python3 -c \"from api import create_app; app = create_app(); ctx = app.app_context(); ctx.push(); from api.models import db; db.create_all(); print('DB initialized')\""
+heroku run "PYTHONPATH=website python3 -c \"from api import create_app; app = create_app(); ctx = app.app_context(); ctx.push(); from api.models import db; db.create_all(); print('DB initialized')\""
 ```
 
 ### Procfile
 
 The root `Procfile` runs:
 ```
-web: PYTHONPATH=studio gunicorn api.index:app
+web: PYTHONPATH=website gunicorn api.index:app
 ```
 
-This sets `PYTHONPATH=studio` so all `api.xxx` imports resolve to `studio/api/`.
+This sets `PYTHONPATH=website` so all `api.xxx` imports resolve to `website/api/`.
 
 ### Verify
 
@@ -70,8 +69,8 @@ curl https://YOUR-APP.herokuapp.com/api/simulate \
 
 1. Connect your GitHub repo to Vercel
 2. Set the following in Vercel project settings:
-   - **Build Command:** `cd studio/frontend && npm install && npm run build`
-   - **Output Directory:** `studio/frontend/build`
+   - **Build Command:** `cd website/frontend && npm install && npm run build`
+   - **Output Directory:** `website/frontend/build`
    - **Root Directory:** `.` (repo root)
 
 3. Ensure the Vercel app's proxy settings are active for your backend, or configure rewrites within Vercel's Edge config.
@@ -88,9 +87,9 @@ vercel --prod
 ### Verify
 
 - Visit `https://your-vercel-app.vercel.app`
-- Navigate to `/simulator` — Studio should load
+- Navigate to `/visualizer` — the circuit canvas should load
 - Click Simulate — should connect to Heroku backend
-- Click Tutor — should work with Gemini API (key is on Heroku)
+- Open the Circuit Explainer — should call `/api/explain` without external API keys
 
 ---
 
@@ -100,7 +99,6 @@ vercel --prod
 |----------|-------|---------|
 | `SECRET_KEY` | Heroku | Flask session signing |
 | `JWT_SECRET_KEY` | Heroku | JWT token signing |
-| `GEMINI_API_KEY` | Heroku | Google Gemini AI Tutor |
 | `FLASK_ENV` | Heroku | Set to `production` |
 | `DATABASE_URL` | Heroku (auto) | Postgres connection string |
 
@@ -111,13 +109,14 @@ vercel --prod
 ## Local Development
 
 ```bash
-# Terminal 1: Backend
-cd studio
-PYTHONPATH=. python3 api/index.py    # Flask on :5001
+# Terminal 1: Backend from repo root
+make backend                         # Flask on :5001
 
-# Terminal 2: Frontend
-cd studio/frontend
-npm start                             # React on :3000 (proxies to :5001)
+# Terminal 2: Frontend from repo root
+make frontend                        # React on :3001, proxies /api to :5001
+
+# Smoke check
+curl -sS http://localhost:5001/health
 ```
 
 ---
@@ -128,17 +127,19 @@ npm start                             # React on :3000 (proxies to :5001)
 ```bash
 heroku logs --tail   # Check for Python import errors
 ```
-Common fix: ensure `PYTHONPATH=studio` is in Procfile.
+Common fix: ensure `PYTHONPATH=website` is in Procfile.
 
 ### API calls fail on Vercel
 - Check that Vercel is proxies the `/api/*` endpoints to your Heroku app URLs
 - Check Heroku logs for 500 errors
 
-### Gemini Tutor returns 503
-- Set `GEMINI_API_KEY` on Heroku: `heroku config:set GEMINI_API_KEY=xxx`
-- Verify: `heroku config:get GEMINI_API_KEY`
+### Visualizer cannot reach backend
+- Confirm `make backend` is running.
+- Confirm `curl -sS http://localhost:5001/health` returns `{"status":"ok",...}`.
+- Confirm the frontend was started from `website/frontend` or via `make frontend` so the package proxy points `/api/*` to `localhost:5001`.
+- Re-run `PYTHONPATH=. python3 -m pytest api/tests/test_visualizer_connectivity.py` from `website/`.
 
 ### Database tables missing
 ```bash
-heroku run "PYTHONPATH=studio python3 -c \"from api import create_app; app = create_app(); ctx = app.app_context(); ctx.push(); from api.models import db; db.create_all()\""
+heroku run "PYTHONPATH=website python3 -c \"from api import create_app; app = create_app(); ctx = app.app_context(); ctx.push(); from api.models import db; db.create_all()\""
 ```

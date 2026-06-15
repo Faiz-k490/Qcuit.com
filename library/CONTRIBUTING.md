@@ -1,77 +1,120 @@
 # Contributing to the Qcuit Python Library
 
-## Getting Started
+The Python package is the core product. Anything importable as `qcuit.*` lives
+here and should work without the website running.
+
+## Setup
 
 ```bash
 git clone https://github.com/Faiz-k490/Qcuit.com.git
 cd Qcuit.com/library
-pip install -e .
-python examples/hello_quantum.py
+pip install -e ".[hep,qml,qiskit,dev]"
+python3 -m pytest tests
 ```
 
-## How to Add a New Gate
+From the repository root, the equivalent command is:
 
-1. **Define the gate matrix** in `qcuit/gates.py`:
-
-```python
-class MyGate(Gate):
-    """Description of what the gate does."""
-    name = "MyGate"
-    symbol = "MG"
-    matrix = np.array([
-        [1, 0],
-        [0, 1]
-    ], dtype=complex)
+```bash
+make library-test
 ```
 
-2. **Export it** in `qcuit/__init__.py`:
+## Package Map
 
-```python
-from qcuit.gates import MyGate
+| Path | Purpose | Add tests in |
+|------|---------|--------------|
+| `qcuit/core.py`, `qcuit/gates.py` | Beginner circuit objects and gates | `tests/` |
+| `qcuit/backend.py` | Optional Qiskit simulator bridge | `tests/` or example smoke tests |
+| `qcuit/diff/` | NumPy differentiable circuits, Hamiltonians, optimizers | new `tests/test_diff.py` |
+| `qcuit/qnn/` | Encoders, ansatze, datasets, QNN training, exporters | new `tests/test_qnn.py` |
+| `qcuit/hep/` | Jet datasets, Lorentz math, HEP metrics/loaders | `tests/test_hep_*.py` |
+| `qcuit/models/` | LorentzNet, LGEB, LieEQGNN, QLieGEB | `tests/test_models.py` |
+| `qcuit/quantum/` | Hybrid Torch/PennyLane layers | `tests/test_models.py` |
+| `qcuit/benchmarks.py` | Headless training/evaluation reports | `tests/test_benchmarks.py` |
+| `examples/` | Runnable scripts | command smoke test in PR description |
+| `notebooks/` | Research demos | keep small; avoid committing large outputs |
+
+The prototype modules `qcuit.noise`, `qcuit.qec`, and `qcuit.pulse` currently
+mirror website API code and are not yet standalone package surfaces. If you make
+one standalone, move the implementation into `library/qcuit/<module>/`, add
+tests, and remove the website-backed import fallback.
+
+## Common Contribution Paths
+
+### Add a HEP data loader
+
+1. Add the parser in `qcuit/hep/data.py`.
+2. Keep optional dependencies behind extras such as `hep-io` or `pyg`.
+3. Add a tiny fixture or synthetic smoke path in `tests/test_hep_data.py`.
+4. Document the public function in `README.md` and `USAGE.md`.
+
+### Add a model or quantum block
+
+1. Add the implementation in `qcuit/models/` or `qcuit/quantum/`.
+2. Keep Torch imports optional where possible.
+3. Add shape, forward-pass, and parameter-count tests.
+4. Add a minimal example if the API is user-facing.
+
+### Add a QNN or differentiable-circuit primitive
+
+1. Add package-native code under `qcuit/qnn/` or `qcuit/diff/`.
+2. Do not import from `website/api`; package code must stand alone.
+3. Add tests covering numerical shape, deterministic output, and exporter text.
+4. Add a short PyPI README snippet if the primitive is public.
+
+### Add a beginner circuit gate
+
+1. Define the gate in `qcuit/gates.py`.
+2. Export it from `qcuit/__init__.py`.
+3. Teach `qcuit/backend.py` how to translate it to Qiskit if it is simulatable.
+4. Add a smoke example and a regression test.
+
+## Design Rules
+
+- Package code cannot depend on the website path.
+- The base install should stay light; put heavy tools behind extras.
+- Public functions need type hints and docstrings.
+- Errors should tell users how to fix the problem.
+- HEP/QML claims should be reproducible and benchmarked against sensible baselines.
+- Avoid large datasets, generated notebooks, model weights, and local reports in git.
+
+## Verification
+
+Run the narrow check for your area before opening a PR:
+
+```bash
+python3 -m pytest tests
+python3 examples/quark_gluon_lie_eqgnn_demo.py
+python3 -m build --wheel
 ```
 
-3. **Add an example** in `examples/` showing the gate in use.
+Or from the repository root:
 
-4. **Test it**:
-
-```python
-from qcuit import Qubit, Circuit, Apply, MyGate
-from qcuit.backend import run_simulation
-
-q = Qubit("test")
-circ = Circuit(q)
-circ.add(Apply(MyGate, target=q))
-circ.measure_all()
-print(run_simulation(circ))
+```bash
+make library-test
+make wheel
 ```
 
-## Code Style
+For changes that also touch the website docs or QML Lab, run:
 
-- Type hints on all public functions
-- Docstrings on all classes and public methods
-- Friendly error messages via `QcuitError` (not raw exceptions)
-- Keep imports minimal — the library should stay lightweight
+```bash
+make frontend-build
+```
 
-## File Guide
+## PyPI Release Checklist
 
-| File | What It Does |
-|------|-------------|
-| `qcuit/__init__.py` | Public API surface — everything users import |
-| `qcuit/core.py` | `Qubit`, `Circuit`, `Apply` classes |
-| `qcuit/gates.py` | All gate definitions and their matrices |
-| `qcuit/backend.py` | Qiskit AerSimulator wrapper |
+Before cutting a release:
 
-## Pull Request Process
+1. Update `version` in `pyproject.toml`.
+2. Verify `README.md` renders correctly as the PyPI long description.
+3. Run `python3 -m pytest tests`.
+4. Run `python3 -m build --wheel --sdist`.
+5. Inspect the wheel contents for `qcuit/py.typed` and expected modules.
+6. Publish to TestPyPI first when possible.
 
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feat/add-my-gate`
-3. Make changes in `library/` only
-4. Test locally with `python examples/hello_quantum.py`
-5. Open a PR with a clear description of what the gate does and why
+## Pull Request Checklist
 
-## Design Principles
-
-- **Plain English first** — users should never need to think in matrices
-- **Friendly errors** — every exception should suggest the fix
-- **Minimal API** — `Qubit`, `Apply`, `Circuit` are the only three concepts needed
-- **Qiskit under the hood** — we translate, not reinvent
+- State whether the PR changes `library/`, `website/`, or docs.
+- Include the exact commands you ran.
+- Add tests for importable behavior.
+- Update `README.md`, `USAGE.md`, or website docs for public API changes.
+- Keep unrelated formatting and generated files out of the PR.

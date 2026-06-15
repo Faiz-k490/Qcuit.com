@@ -33,18 +33,18 @@ source .venv/bin/activate
 
 # Install Python dependencies
 echo "[2/4] Installing Python dependencies..."
-pip install -q -r studio/requirements.txt
+pip install -q -r website/requirements.txt
 
 # Install frontend dependencies
 echo "[3/4] Installing frontend dependencies..."
-cd studio/frontend && npm install --silent && cd ../..
+cd website/frontend && npm install --silent && cd ../..
 
 # Create .env if missing
 echo "[4/4] Setting up environment..."
 if [ ! -f ".env" ]; then
     cp .env.example .env
     echo "  Created .env from .env.example"
-    echo "  >> Edit .env to add your GEMINI_API_KEY"
+    echo "  >> Edit .env only if you need custom local secrets"
 else
     echo "  .env already exists"
 fi
@@ -53,9 +53,9 @@ echo ""
 echo "================================================"
 echo "  Setup complete!"
 echo ""
-echo "  Start backend:  cd studio && PYTHONPATH=. python3 api/index.py"
-echo "  Start frontend: cd studio/frontend && npm start"
+echo "  Start backend:  cd website && PYTHONPATH=. python3 api/index.py"
+echo "  Start frontend: cd website/frontend && npm start"
 echo ""
 echo "  Or from repo root:"
-echo "    PYTHONPATH=studio python3 studio/api/index.py"
+echo "    PYTHONPATH=website python3 website/api/index.py"
 echo "================================================"
