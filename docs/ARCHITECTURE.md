@@ -32,8 +32,7 @@ Qcuit.com/
 │   └── api/           # Flask backend
 ├── api/               # Vercel serverless wrapper for website/api
 ├── docs/              # Documentation + historical archive
-├── vercel.json        # Vercel build and routing
-└── Procfile           # Alternative container-style backend hosting
+└── vercel.json        # Vercel build and routing
 ```
 
 ## Backend (Flask)

@@ -40,7 +40,7 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', '')
 
-    # Managed Postgres (Vercel Postgres / Neon / Heroku) often emits a
+    # Managed Postgres providers often emit a
     # ``postgres://`` scheme, but SQLAlchemy requires ``postgresql://``.
     if SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(

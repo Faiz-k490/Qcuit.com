@@ -104,8 +104,7 @@ Qcuit.com/
 ├── docs/                Architecture, deployment, repo map
 │   └── _archive/        Retired notes, old journal frontend, historical docs
 ├── scripts/             setup_dev.sh
-├── vercel.json          Vercel build + routing (frontend + /api function)
-└── Procfile             Heroku (alternative container hosting)
+└── vercel.json          Vercel build + routing (frontend + /api function)
 ```
 
 The simulation pipeline: the frontend sends a circuit description via `POST /api/simulate`. The backend normalizes gate formats, selects a kernel (statevector for small circuits, Clifford for stabilizer circuits), optionally applies noise, generates equivalent code in Qiskit/Braket/OpenQASM, and returns probabilities alongside exportable source.
@@ -124,7 +123,7 @@ The companion site deploys as a **single Vercel project** — the React build is
 | Serverless entry | Vercel Function | [`api/index.py`](api/index.py) wraps the Flask app |
 | Database (auth/blog) | Postgres (Vercel/Neon) | Set `DATABASE_URL` env var |
 
-The quantum tools (simulate, explain, QNN, QEC, pulse, noise) run without a database; only auth/blog need `DATABASE_URL`. A Heroku `Procfile` is also kept for container-style hosting. Step-by-step instructions: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+The quantum tools (simulate, explain, QNN, QEC, pulse, noise) run without a database; only auth/blog need `DATABASE_URL`. Step-by-step instructions: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
