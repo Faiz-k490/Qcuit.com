@@ -136,6 +136,10 @@ report = benchmark_classifier(model, data, epochs=5, batch_size=8)
 print(report.metrics)
 ```
 
+`report.metrics` includes accuracy, ROC AUC, loss, wall-clock time,
+`background_rejection@0.3`, `background_rejection@0.5`, and trainable
+parameter count.
+
 This workflow is designed for collider-style graph data and research questions
 around Lorentz structure, parameter efficiency, and hybrid quantum/classical
 blocks. It is not a claim of quantum advantage; it is a reproducible starting
@@ -243,7 +247,7 @@ Useful flags:
 | `toy_quark_gluon_jets(...)` | Small deterministic smoke dataset |
 | `minkowski_dot(...)`, `minkowski_norm(...)` | Lorentz geometry helpers |
 | `lorentz_boost(...)`, `apply_lorentz_transform(...)` | Four-vector transforms |
-| `build_roc(...)`, `background_rejection(...)` | HEP classification metrics |
+| `build_roc(...)`, `background_rejection(...)`, `binary_classification_metrics(...)` | HEP classification metrics, including fixed-efficiency background rejection |
 | `LorentzNet`, `LieEQGNN` | Classical and hybrid graph classifiers |
 | `DressedQuantumLayer` | Hybrid Torch/PennyLane layer |
 | `benchmark_classifier(...)` | Headless train/evaluate loop |

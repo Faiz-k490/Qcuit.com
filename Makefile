@@ -11,7 +11,7 @@ help:
 	@echo "  make library-test    Run Python library tests"
 	@echo "  make library-demo    Run the LieEQGNN smoke benchmark"
 	@echo "  make wheel           Build the qcuit wheel"
-	@echo "  make verify          Run library tests and frontend build"
+	@echo "  make verify          Run library tests, backend tests, and frontend build"
 
 setup:
 	bash scripts/setup_dev.sh

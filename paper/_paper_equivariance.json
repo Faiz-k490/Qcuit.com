@@ -1,0 +1,29 @@
+{
+  "equivariance": [
+    {
+      "transform": "identity",
+      "max_logit_deviation": 0.0
+    },
+    {
+      "transform": "z_boost(beta=0.30)",
+      "max_logit_deviation": 1.1920928955078125e-06
+    },
+    {
+      "transform": "z_boost(beta=0.60)",
+      "max_logit_deviation": 7.152557373046875e-07
+    },
+    {
+      "transform": "azimuthal_rot(1.0rad)",
+      "max_logit_deviation": 7.152557373046875e-07
+    },
+    {
+      "transform": "azimuthal_rot(2.5rad)",
+      "max_logit_deviation": 5.960464477539062e-07
+    }
+  ],
+  "lie_algebra": {
+    "invariant": true,
+    "max_residual": 0.0,
+    "n_generators": 6
+  }
+}

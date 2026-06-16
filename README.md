@@ -4,6 +4,7 @@
 
 *Open-source Python tooling for quantum ML, Lorentz-aware HEP workflows, and reproducible benchmarks.*
 
+[![CI](https://github.com/Faiz-k490/Qcuit.com/actions/workflows/ci.yml/badge.svg)](https://github.com/Faiz-k490/Qcuit.com/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-C5A059.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-0A1F1C.svg)](https://python.org)
 [![Website](https://img.shields.io/badge/qcuit.com-live-C5A059.svg)](https://qcuit.com)
@@ -99,10 +100,12 @@ Qcuit.com/
 │           ├── components/  CircuitCanvas, QSphere, BlochSphere, Explainer
 │           └── store/       CircuitContext (React Context)
 │
+├── api/                 Vercel serverless entry (index.py wraps the Flask app)
 ├── docs/                Architecture, deployment, repo map
 │   └── _archive/        Retired notes, old journal frontend, historical docs
 ├── scripts/             setup_dev.sh
-└── Procfile             Heroku (backend)
+├── vercel.json          Vercel build + routing (frontend + /api function)
+└── Procfile             Heroku (alternative container hosting)
 ```
 
 The simulation pipeline: the frontend sends a circuit description via `POST /api/simulate`. The backend normalizes gate formats, selects a kernel (statevector for small circuits, Clifford for stabilizer circuits), optionally applies noise, generates equivalent code in Qiskit/Braket/OpenQASM, and returns probabilities alongside exportable source.
@@ -113,15 +116,15 @@ For a deeper walkthrough, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Deployment
 
-The backend runs on Heroku. The frontend is served by Vercel. All secrets live in environment variables — nothing is committed to the repository.
+The companion site deploys as a **single Vercel project** — the React build is served as static assets and the Flask API runs as a Python serverless function. All secrets live in environment variables; nothing is committed to the repository.
 
 | Component | Platform | Config |
 |-----------|----------|--------|
-| Backend | Heroku | `Procfile` at repo root |
-| Frontend | Vercel | Configured in dashboard |
-| Database | SQLite (dev) / Postgres (prod) | Automatic via `DATABASE_URL` |
+| Frontend + Backend | Vercel | [`vercel.json`](vercel.json) at repo root |
+| Serverless entry | Vercel Function | [`api/index.py`](api/index.py) wraps the Flask app |
+| Database (auth/blog) | Postgres (Vercel/Neon) | Set `DATABASE_URL` env var |
 
-Step-by-step instructions: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+The quantum tools (simulate, explain, QNN, QEC, pulse, noise) run without a database; only auth/blog need `DATABASE_URL`. A Heroku `Procfile` is also kept for container-style hosting. Step-by-step instructions: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 

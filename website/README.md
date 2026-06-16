@@ -129,7 +129,7 @@ src/
 |----------|---------|
 | `SECRET_KEY` | Flask session signing |
 | `JWT_SECRET_KEY` | JWT token signing |
-| `DATABASE_URL` | Database connection (production) |
+| `DATABASE_URL` | Optional Postgres connection for auth/user/blog routes |
 | `FLASK_ENV` | `development` or `production` |
 
 ## Local Verification
@@ -144,7 +144,10 @@ PYTHONPATH=. python3 -m pytest api/tests/test_visualizer_connectivity.py
 
 ## Deployment
 
-- **Backend:** Heroku (`Procfile` at repo root)
-- **Frontend:** Vercel (`vercel.json` at repo root)
+The browser companion deploys as one Vercel project:
+
+- **Frontend:** static React build from `website/frontend`
+- **Backend:** Python Serverless Function at root `api/index.py`
+- **Routing:** `vercel.json` sends `/api/*` and `/health` to the function
 
 See [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) for detailed instructions.

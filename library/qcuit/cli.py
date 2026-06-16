@@ -48,6 +48,10 @@ def lie_eqgnn_demo(argv: list[str] | None = None) -> None:
     print(f"accuracy:   {report.metrics['accuracy']:.3f}")
     print(f"auc:        {report.metrics['auc']:.3f}")
     print(f"loss:       {report.metrics['loss']:.3f}")
+    for efficiency in (0.3, 0.5):
+        metric_key = f"background_rejection@{efficiency:g}"
+        if metric_key in report.metrics:
+            print(f"rej@{efficiency:g}:    {report.metrics[metric_key]:.3g}")
     print(f"parameters: {int(report.metrics['parameters'])}")
     if args.out is not None:
         print(f"report:     {args.out}")

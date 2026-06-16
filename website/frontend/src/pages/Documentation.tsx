@@ -160,7 +160,7 @@ const HEP_REFERENCE = [
   ['invariant_metric_from_generators(...)', 'Torch LBFGS helper for extracting an invariant metric tensor.'],
   ['build_roc(labels, scores, target_efficiencies)', 'Returns ROC arrays, AUC, thresholds, and background rejection.'],
   ['background_rejection(labels, scores, target_efficiency)', 'Returns 1/FPR at a target signal efficiency.'],
-  ['binary_classification_metrics(labels, logits_or_scores)', 'Returns accuracy and AUC for binary classifiers.'],
+  ['binary_classification_metrics(labels, logits_or_scores)', 'Returns accuracy, AUC, and fixed-efficiency background rejection for binary classifiers.'],
   ['parameter_count(model, trainable_only=True)', 'Counts trainable or all Torch parameters.'],
 ];
 
@@ -177,7 +177,7 @@ const MODEL_REFERENCE = [
   ['BenchmarkReport.to_dict()', 'Returns report as plain Python dictionaries/lists.'],
   ['BenchmarkReport.to_json(path)', 'Writes a benchmark report to JSON.'],
   ['set_seed(seed)', 'Seeds Python, NumPy, Torch, and CUDA when available.'],
-  ['benchmark_classifier(model, dataset, ...)', 'Trains/evaluates a classifier and returns BenchmarkReport.'],
+  ['benchmark_classifier(model, dataset, ...)', 'Trains/evaluates a classifier and returns BenchmarkReport metrics for accuracy, AUC, rejection, timing, and parameters.'],
   ['lie_eqgnn_demo(argv=None)', 'CLI entry point behind qcuit-lie-eqgnn-demo.'],
 ];
 

@@ -14,7 +14,7 @@
 │  - hep/                    │  - Learn                   │
 │  - models/                 │  - Visualizer              │
 │  - quantum/                │  - QML Lab                 │
-│  - benchmarks.py           │  Flask API for local tools │
+│  - benchmarks.py           │  Flask API + Vercel entry  │
 └────────────────────────────┴────────────────────────────┘
 ```
 
@@ -30,9 +30,10 @@ Qcuit.com/
 ├── website/            # Web application
 │   ├── frontend/      # React SPA
 │   └── api/           # Flask backend
+├── api/               # Vercel serverless wrapper for website/api
 ├── docs/              # Documentation + historical archive
-├── Procfile           # Heroku deployment
-└── vercel.json        # Vercel deployment
+├── vercel.json        # Vercel build and routing
+└── Procfile           # Alternative container-style backend hosting
 ```
 
 ## Backend (Flask)
@@ -47,6 +48,10 @@ Qcuit.com/
 4. Register Blueprints for auth, simulation, notebooks, QML trainers, QNNs, QEC, noise, and pulse tools
 5. Register simulation routes via `_register_simulation_routes(app)`
 6. Add catch-all for React client-side routing
+
+For production on Vercel, the root-level `api/index.py` imports this app
+factory and exposes a WSGI `app`. `vercel.json` sends `/api/*` and `/health`
+to that function while serving the React build as static assets.
 
 ### Simulation Pipeline
 

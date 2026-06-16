@@ -82,6 +82,10 @@ report = benchmark_classifier(model, data, epochs=10, batch_size=8)
 print(report.metrics)
 ```
 
+The report metrics include accuracy, ROC AUC, loss, wall-clock time,
+`background_rejection@0.3`, `background_rejection@0.5`, and trainable
+parameter count.
+
 Replace `quantum_backend="torch"` with `quantum_backend="pennylane"` after
 installing `qcuit[hep,qml]`.
 
@@ -106,7 +110,7 @@ HEP functions/classes:
 - `lorentz_boost(...)`, `apply_lorentz_transform(...)`: four-vector transforms.
 - `check_metric_invariance(...)`: Lie generator metric check.
 - `invariant_metric_from_generators(...)`: learned invariant metric helper.
-- `build_roc(...)`, `background_rejection(...)`, `binary_classification_metrics(...)`: HEP metrics.
+- `build_roc(...)`, `background_rejection(...)`, `binary_classification_metrics(...)`: HEP metrics, including fixed-efficiency background rejection.
 - `parameter_count(model)`: trainable parameter count.
 
 ## Models and Benchmarks
@@ -117,7 +121,7 @@ HEP functions/classes:
 - `QLieGEB`: LieEQGNN block with quantum `phi_e`, `phi_h`, `phi_x`, or `phi_m`.
 - `DressedQuantumLayer`: Torch module with `torch`, `pennylane`, or `auto` backend.
 - `entangling_layer(qml, n_qubits)`: staggered CNOT pattern.
-- `benchmark_classifier(...)`: train/evaluate a classifier.
+- `benchmark_classifier(...)`: train/evaluate a classifier and serialize accuracy, AUC, loss, rejection, timing, and parameter metrics.
 - `BenchmarkReport.to_dict()`: serialize report in memory.
 - `BenchmarkReport.to_json(path)`: save report to disk.
 - `set_seed(seed)`: seed Python, NumPy, Torch, and CUDA.

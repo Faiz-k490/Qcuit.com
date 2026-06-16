@@ -26,7 +26,11 @@ def build_roc(labels: Any, scores: Any, target_efficiencies: list[float] | None 
     auc = float(roc_auc_score(y, s)) if len(np.unique(y)) > 1 else float("nan")
     rejection = {}
     for eff in target_efficiencies:
-        idx = int(np.argmin(np.abs(tpr - eff)))
+        candidates = np.flatnonzero(tpr >= eff)
+        if candidates.size:
+            idx = int(candidates[np.argmin(tpr[candidates] - eff)])
+        else:
+            idx = int(np.argmax(tpr))
         rejection[str(eff)] = float(1.0 / max(fpr[idx], 1e-12))
     return {
         "fpr": fpr,
@@ -42,8 +46,17 @@ def background_rejection(labels: Any, scores: Any, target_efficiency: float = 0.
     return float(build_roc(labels, scores, [target_efficiency])["background_rejection"][str(target_efficiency)])
 
 
-def binary_classification_metrics(labels: Any, logits_or_scores: Any) -> dict[str, float]:
-    """Return accuracy/AUC metrics from labels and logits/probabilities."""
+def _background_rejection_metric_key(target_efficiency: float) -> str:
+    return f"background_rejection@{target_efficiency:g}"
+
+
+def binary_classification_metrics(
+    labels: Any,
+    logits_or_scores: Any,
+    target_efficiencies: list[float] | None = None,
+) -> dict[str, float]:
+    """Return accuracy, AUC, and fixed-efficiency rejection metrics."""
+    target_efficiencies = [0.3, 0.5] if target_efficiencies is None else list(target_efficiencies)
     values = np.asarray(logits_or_scores)
     labels_np = np.asarray(labels).reshape(-1)
     if values.ndim == 2 and values.shape[1] >= 2:
@@ -55,5 +68,14 @@ def binary_classification_metrics(labels: Any, logits_or_scores: Any) -> dict[st
         scores = values.reshape(-1)
         pred = (scores >= 0.5).astype(int)
     acc = float(np.mean(pred == labels_np))
-    roc = build_roc(labels_np, scores) if len(np.unique(labels_np)) > 1 else {"auc": float("nan")}
-    return {"accuracy": acc, "auc": float(roc["auc"])}
+    metrics = {"accuracy": acc}
+    if len(np.unique(labels_np)) > 1:
+        roc = build_roc(labels_np, scores, target_efficiencies)
+        metrics["auc"] = float(roc["auc"])
+        for efficiency, rejection in roc["background_rejection"].items():
+            metrics[_background_rejection_metric_key(float(efficiency))] = float(rejection)
+    else:
+        metrics["auc"] = float("nan")
+        for efficiency in target_efficiencies:
+            metrics[_background_rejection_metric_key(efficiency)] = float("nan")
+    return metrics
