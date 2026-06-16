@@ -13,7 +13,7 @@ blinker==1.9.0
 numpy==2.3.4
 
 # Postgres driver (auth/blog/user routes when DATABASE_URL is set)
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.12
 
 # Quantum computing backend
 qiskit>=1.0.0

@@ -36,3 +36,4 @@ website/data/notebook/
 
 # pytest
 .pytest_cache/
+.vercel
