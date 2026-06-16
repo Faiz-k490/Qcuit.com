@@ -1,1 +1,2 @@
--r website/requirements.txt
+# Vercel detects root requirements.txt for Python serverless functions.
+-r api/requirements.txt
