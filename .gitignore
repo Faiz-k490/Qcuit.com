@@ -37,3 +37,6 @@ website/data/notebook/
 # pytest
 .pytest_cache/
 .vercel
+
+# Local paper exports
+paper/

@@ -1,6 +1,7 @@
 import React from 'react';
-import { IconBrandGithub, IconExternalLink, IconPackage } from '@tabler/icons-react';
+import { IconBrandGithub, IconExternalLink } from '@tabler/icons-react';
 import { INSTALL_COMMAND, PROJECT_LINKS } from '../lib/projectLinks';
+import { QcuitLogo } from './QcuitLogo';
 
 type SiteNavProps = {
   active?: 'home' | 'docs' | 'learn' | 'visualizer' | 'lab';
@@ -19,7 +20,7 @@ export function SiteNav({ active = 'home' }: SiteNavProps) {
     <nav className="sticky top-0 z-50 border-b border-vegas-gold/12 bg-deep-jungle/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
         <a href="/" className="flex items-center gap-2 text-isabelline hover:text-vegas-gold">
-          <IconPackage size={20} stroke={1.7} className="text-vegas-gold" />
+          <QcuitLogo size={32} className="shrink-0" decorative />
           <span className="font-display text-2xl">Qcuit</span>
           <span className="hidden border-l border-vegas-gold/18 pl-3 font-mono text-[10px] uppercase tracking-widest text-isabelline/42 sm:inline">
             HEP/QML research library

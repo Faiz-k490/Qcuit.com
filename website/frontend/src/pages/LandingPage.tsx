@@ -19,6 +19,7 @@ import {
   IconTerminal2,
 } from '@tabler/icons-react';
 import { SiteNav } from '../components/SiteNav';
+import { QcuitLogo } from '../components/QcuitLogo';
 import { INSTALL_COMMAND, PROJECT_LINKS } from '../lib/projectLinks';
 
 type IconType = React.ComponentType<{ size?: number; stroke?: number; className?: string }>;
@@ -157,6 +158,16 @@ export function LandingPage() {
       <header className="px-5 py-14 md:py-20">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
           <div className="min-w-0">
+            <div className="mb-7 flex items-center gap-4">
+              <QcuitLogo size={64} className="shrink-0" decorative />
+              <div className="min-w-0">
+                <p className="font-display text-3xl leading-none text-isabelline">Qcuit</p>
+                <p className="mt-2 font-mono text-xs uppercase text-vegas-gold/75">
+                  pip-first quantum ML
+                </p>
+              </div>
+            </div>
+
             <div className="mb-6 inline-flex items-center gap-2 border border-vegas-gold/22 px-3 py-2 text-vegas-gold">
               <IconMicroscope size={18} stroke={1.7} />
               <span className="font-mono text-xs">Python package for HEP and quantum ML research</span>
