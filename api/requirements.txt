@@ -15,6 +15,5 @@ numpy==2.3.4
 # Postgres driver (auth/blog/user routes when DATABASE_URL is set)
 psycopg2-binary==2.9.12
 
-# Quantum computing backend
-qiskit>=1.0.0
-qiskit-aer>=0.13.0
+# Qiskit exports are generated as source strings; the serverless API does not
+# execute Qiskit/Aer at runtime.

@@ -15,9 +15,8 @@ flask-cors
 # Postgres driver (production: auth/blog/user when DATABASE_URL is set)
 psycopg2-binary==2.9.12
 
-# Quantum computing backend
-qiskit>=1.0.0
-qiskit-aer>=0.13.0
+# Qiskit exports are generated as source strings; install qiskit/qiskit-aer
+# separately only when executing exported circuits locally.
 
 # Testing (Phase 3+)
 pytest>=8.0.0
