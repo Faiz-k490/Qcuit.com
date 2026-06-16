@@ -1,0 +1,20 @@
+{
+  "name": "quantinuum_h1_2024",
+  "vendor": "quantinuum",
+  "device": "quantinuum_h1_1",
+  "num_qubits": 5,
+  "t1_ns": [60000000.0, 60000000.0, 60000000.0, 60000000.0, 60000000.0],
+  "t2_ns": [4000000.0, 4000000.0, 4000000.0, 4000000.0, 4000000.0],
+  "gate_time_1q_ns": 5000.0,
+  "gate_time_2q_ns": 250000.0,
+  "gate_time_measure_ns": 100000.0,
+  "gate_error_1q": [0.00002, 0.00002, 0.00002, 0.00002, 0.00002],
+  "gate_error_2q": [
+    {"qubits": [0, 1], "error": 0.0014},
+    {"qubits": [0, 2], "error": 0.0014},
+    {"qubits": [0, 3], "error": 0.0014},
+    {"qubits": [0, 4], "error": 0.0014}
+  ],
+  "readout_error": [0.0036, 0.0036, 0.0036, 0.0036, 0.0036],
+  "description": "Synthetic Quantinuum H1-1 2024 calibration. All-to-all trapped-ion device with the lowest published two-qubit error rates."
+}

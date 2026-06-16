@@ -40,11 +40,23 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', '')
 
-    # Heroku Postgres uses postgres:// but SQLAlchemy needs postgresql://
+    # Managed Postgres (Vercel Postgres / Neon / Heroku) often emits a
+    # ``postgres://`` scheme, but SQLAlchemy requires ``postgresql://``.
     if SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
             'postgres://', 'postgresql://', 1
         )
+
+    # Serverless (Vercel) runs many short-lived instances, so a per-instance
+    # connection pool quickly exhausts the database's connection limit and
+    # leaves stale sockets between cold starts. NullPool opens/closes a
+    # connection per request; pair this with a provider-side pooler
+    # (e.g. Neon/Vercel Postgres "pooled" connection string) for best results.
+    from sqlalchemy.pool import NullPool
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'poolclass': NullPool,
+        'pool_pre_ping': True,
+    }
 
 
 config_by_name = {

@@ -1,0 +1,20 @@
+{
+  "name": "ionq_aria_2024",
+  "vendor": "ionq",
+  "device": "ionq_aria",
+  "num_qubits": 5,
+  "t1_ns": [10000000.0, 10500000.0, 9800000.0, 11200000.0, 10100000.0],
+  "t2_ns": [1100000.0, 1050000.0, 1180000.0, 1090000.0, 1140000.0],
+  "gate_time_1q_ns": 135000.0,
+  "gate_time_2q_ns": 600000.0,
+  "gate_time_measure_ns": 130000.0,
+  "gate_error_1q": [0.0003, 0.00032, 0.00029, 0.00034, 0.00031],
+  "gate_error_2q": [
+    {"qubits": [0, 1], "error": 0.0048},
+    {"qubits": [0, 2], "error": 0.0050},
+    {"qubits": [0, 3], "error": 0.0049},
+    {"qubits": [0, 4], "error": 0.0051}
+  ],
+  "readout_error": [0.0033, 0.0036, 0.0031, 0.0038, 0.0034],
+  "description": "Synthetic IonQ Aria 2024 calibration. Trapped-ion devices have orders-of-magnitude longer T1/T2 but slower gates than superconducting hardware."
+}

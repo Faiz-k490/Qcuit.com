@@ -30,8 +30,9 @@ Thumbs.db
 *.swp
 *.swo
 
-# Qcuit local data — notebook artifacts, calibration snapshots, etc.
-website/data/
+# Qcuit local data — ephemeral notebook artifacts (shipped noise snapshots
+# under website/data/noise/ ARE tracked and deployed).
+website/data/notebook/
 
 # pytest
 .pytest_cache/

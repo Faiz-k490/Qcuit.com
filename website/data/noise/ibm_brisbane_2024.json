@@ -1,0 +1,20 @@
+{
+  "name": "ibm_brisbane_2024",
+  "vendor": "ibm",
+  "device": "ibm_brisbane",
+  "num_qubits": 5,
+  "t1_ns": [220000.0, 195000.0, 240000.0, 210000.0, 205000.0],
+  "t2_ns": [180000.0, 160000.0, 195000.0, 175000.0, 168000.0],
+  "gate_time_1q_ns": 35.0,
+  "gate_time_2q_ns": 540.0,
+  "gate_time_measure_ns": 1200.0,
+  "gate_error_1q": [0.00042, 0.00051, 0.00039, 0.00047, 0.00044],
+  "gate_error_2q": [
+    {"qubits": [0, 1], "error": 0.0118},
+    {"qubits": [1, 2], "error": 0.0142},
+    {"qubits": [2, 3], "error": 0.0109},
+    {"qubits": [3, 4], "error": 0.0133}
+  ],
+  "readout_error": [0.0112, 0.0131, 0.0097, 0.0124, 0.0105],
+  "description": "Synthetic IBM Brisbane March 2024 calibration. Numbers are representative of public median data, not pulled from a specific run."
+}
