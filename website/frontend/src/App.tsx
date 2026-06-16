@@ -290,7 +290,10 @@ function App() {
 
   // --- API Call ---
   async function onSimulateClick() {
-    const API_URL = process.env.REACT_APP_API_URL || '/api/simulate';
+    const API_URL =
+      import.meta.env.VITE_API_URL ||
+      import.meta.env.REACT_APP_API_URL ||
+      '/api/simulate';
     console.log(`Sending simulation request to: ${API_URL}`);
 
     try {
