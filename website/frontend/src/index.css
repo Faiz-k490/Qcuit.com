@@ -23,6 +23,14 @@ body,
   background-color: #0A1F1C;
 }
 
+/* Guard against stray horizontal scroll from full-bleed sections or
+   elements that overshoot the viewport width on narrow screens. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .qcuit-route-shell {
   animation: qcuit-route-enter 160ms ease-out both;
   transform-origin: 50% 0;
