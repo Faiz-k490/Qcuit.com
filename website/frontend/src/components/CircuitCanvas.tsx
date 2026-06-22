@@ -387,12 +387,12 @@ export function CircuitCanvas({ selectedGate, onGateSelect, inspectTimestep, onI
     <div className="h-full flex flex-col relative" onClick={dismissToolbar}>
       {/* Gate placement status bar */}
       {(selectedGate || pendingMultiGate) && (
-        <div className="flex items-center justify-between px-3 py-1 border-b border-vegas-gold/15 font-body text-xs text-vegas-gold"
-          style={{ paddingLeft: 200, backgroundColor: 'rgba(17,42,38,0.9)' }}>
-          <span>{pendingMultiGate 
+        <div className="flex items-center justify-between gap-2 px-3 py-1 pl-4 md:pl-[200px] border-b border-vegas-gold/15 font-body text-xs text-vegas-gold"
+          style={{ backgroundColor: 'rgba(17,42,38,0.9)' }}>
+          <span className="min-w-0 truncate">{pendingMultiGate
             ? `Click ${pendingMultiGate.gateType === 'M' ? 'classical bit' : 'target qubit'} to complete ${pendingMultiGate.gateType}`
             : `Selected: ${selectedGate} — Click a slot to place`}</span>
-          <span className="cursor-pointer px-2 hover:text-isabelline transition-colors"
+          <span className="shrink-0 cursor-pointer px-2 hover:text-isabelline transition-colors"
             onClick={() => { onGateSelect(null); setPendingMultiGate(null); }}>✕ Cancel</span>
         </div>
       )}

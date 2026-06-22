@@ -40,6 +40,7 @@ import {
   PanelResizeHandle,
 } from 'react-resizable-panels';
 import { CircuitProvider, useCircuit } from './store/CircuitContext';
+import { useMediaQuery } from './hooks/useMediaQuery';
 import { CircuitCanvas } from './components/CircuitCanvas';
 import { OutputDisplay } from './components/OutputDisplay';
 import { QSphere } from './components/QSphere';
@@ -152,7 +153,7 @@ function ModeSwitch() {
   };
 
   return (
-    <div className="flex items-center gap-0.5 px-1 py-0.5 rounded border border-vegas-gold/15 bg-deep-jungle/40 ml-1">
+    <div className="hidden shrink-0 items-center gap-0.5 px-1 py-0.5 rounded border border-vegas-gold/15 bg-deep-jungle/40 ml-1 md:flex">
       {modes.map((m) => {
         const active = m === mode;
         return (
@@ -458,6 +459,14 @@ export function CircuitEditor() {
   const [notification, setNotification] = useState<{ title: string; message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [inspectTimestep, setInspectTimestep] = useState<number | null>(null);
 
+  // Below `lg`, the horizontal IDE columns can't fit side by side, so stack
+  // them as resizable rows instead of squashing 3-5 panels into a phone width.
+  const isNarrow = useMediaQuery('(max-width: 1023px)');
+  const groupDirection = isNarrow ? 'vertical' : 'horizontal';
+  const outerHandleClass = isNarrow
+    ? 'h-px w-full bg-vegas-gold/15 hover:bg-vegas-gold/30 transition-colors'
+    : 'w-px bg-vegas-gold/15 hover:bg-vegas-gold/30 transition-colors';
+
   // Panel visibility
   const [panels, setPanels] = useState({
     operations: true,
@@ -734,7 +743,7 @@ export function CircuitEditor() {
   const gateCount = Object.keys(state.gates).length + state.multiQubitGates.length + state.measurements.length;
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#061412]">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-[#061412]">
       <SiteNav active="visualizer" />
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#061412]">
       {/* ── Notification Toast ── */}
@@ -756,11 +765,11 @@ export function CircuitEditor() {
         <div className="flex min-h-[54px] items-center justify-between gap-4">
           {/* Left: logo + menus */}
           <div className="flex min-w-0 items-center gap-3">
-            <a href="/" className="flex min-w-0 items-center gap-3 border border-vegas-gold/15 bg-forest-light/35 px-3 py-2 transition-colors hover:border-vegas-gold/40">
+            <a href="/" className="flex shrink-0 items-center gap-3 border border-vegas-gold/15 bg-forest-light/35 px-3 py-2 transition-colors hover:border-vegas-gold/40">
               <span className="flex h-8 w-8 items-center justify-center border border-vegas-gold/45 font-display text-lg font-bold text-vegas-gold">Q</span>
-              <span className="hidden min-w-0 sm:block">
+              <span className="hidden whitespace-nowrap lg:block">
                 <span className="block font-body text-sm font-semibold leading-4 text-isabelline">Qcuit Visualize</span>
-                <span className="block truncate font-mono text-[10px] text-isabelline/40">Optional package companion</span>
+                <span className="block font-mono text-[10px] text-isabelline/40">Optional package companion</span>
               </span>
             </a>
             <ModeSwitch />
@@ -775,7 +784,7 @@ export function CircuitEditor() {
           </div>
 
           {/* Center: circuit status */}
-          <div className="hidden min-w-0 items-center gap-2 xl:flex">
+          <div className="hidden min-w-0 items-center gap-2 2xl:flex">
             {[
               ['Qubits', state.numQubits],
               ['Gates', gateCount],
@@ -852,14 +861,14 @@ export function CircuitEditor() {
 
       {/* ═══════ MAIN 3-COLUMN LAYOUT ═══════ */}
       <div className="flex-1 min-h-0">
-        <PanelGroup direction="horizontal">
+        <PanelGroup direction={groupDirection}>
           {/* LEFT: Operations Catalog */}
           {panels.operations && (
             <>
-              <Panel defaultSize={14} minSize={10} maxSize={22}>
+              <Panel defaultSize={14} minSize={10} maxSize={isNarrow ? 40 : 22}>
                 <OperationsCatalog selectedGate={selectedGate} onGateSelect={setSelectedGate} />
               </Panel>
-              <PanelResizeHandle className="w-px bg-vegas-gold/15 hover:bg-vegas-gold/30 transition-colors" />
+              <PanelResizeHandle className={outerHandleClass} />
             </>
           )}
 
@@ -981,8 +990,8 @@ export function CircuitEditor() {
           {/* RIGHT: Code Panel */}
           {panels.code && (
             <>
-              <PanelResizeHandle className="w-px bg-vegas-gold/15 hover:bg-vegas-gold/30 transition-colors" />
-              <Panel defaultSize={panels.explainer ? 18 : 28} minSize={14} maxSize={40}>
+              <PanelResizeHandle className={outerHandleClass} />
+              <Panel defaultSize={panels.explainer ? 18 : 28} minSize={14} maxSize={isNarrow ? 60 : 40}>
                 <div className="flex h-full flex-col bg-[#071715]">
                   {/* Code tab bar */}
                   <div className="flex min-h-[42px] items-center border-b border-vegas-gold/15 bg-[#0d2420]">
@@ -1033,8 +1042,8 @@ export function CircuitEditor() {
           {/* RIGHT-MOST: Deterministic Circuit Explainer */}
           {panels.explainer && (
             <>
-              <PanelResizeHandle className="w-px bg-vegas-gold/15 hover:bg-vegas-gold/30 transition-colors" />
-              <Panel defaultSize={22} minSize={16} maxSize={35}>
+              <PanelResizeHandle className={outerHandleClass} />
+              <Panel defaultSize={22} minSize={16} maxSize={isNarrow ? 60 : 35}>
                 <CircuitExplainer />
               </Panel>
             </>

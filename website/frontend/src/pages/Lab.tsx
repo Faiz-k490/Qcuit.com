@@ -211,11 +211,11 @@ export function Lab() {
 
       <div className="flex-1 grid min-h-0 lg:grid-cols-[260px_1fr]">
         {/* Sidebar: tab list */}
-        <aside className="border-b border-vegas-gold/15 bg-forest-light/10 p-3 overflow-x-auto lg:border-b-0 lg:border-r lg:overflow-y-auto">
+        <aside className="border-b border-vegas-gold/15 bg-forest-light/10 p-3 lg:border-b-0 lg:border-r lg:overflow-y-auto">
             <div className="font-mono text-[10px] text-vegas-gold/50 uppercase tracking-widest mb-2 px-1">
             Local companion panels
           </div>
-          <div className="grid min-w-[720px] grid-cols-3 gap-1.5 lg:min-w-0 lg:grid-cols-1">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-1">
             {TABS.map((t) => (
               <TabPill
                 key={t.id}
@@ -226,7 +226,7 @@ export function Lab() {
             ))}
           </div>
 
-          <div className="mt-4 min-w-[220px] px-2 py-3 border border-vegas-gold/10 rounded-sm bg-deep-jungle/40 lg:mt-6">
+          <div className="mt-4 px-2 py-3 border border-vegas-gold/10 rounded-sm bg-deep-jungle/40 lg:mt-6">
             <div className="font-mono text-[9px] text-vegas-gold/50 uppercase tracking-widest mb-1">
               Headless package
             </div>
