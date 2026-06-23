@@ -390,7 +390,7 @@ export default function QECPanel() {
   const residualPaulis = result ? bitsToPaulis(result.residual) : null;
 
   return (
-    <div className="flex flex-col h-full -mx-8 -mt-0">
+    <div className="flex flex-col h-full">
       {/* ── Top bar ── */}
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-vegas-gold/15 bg-forest-light/20">
         <h2 className="font-display text-base text-isabelline tracking-wide mr-auto">
