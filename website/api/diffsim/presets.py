@@ -19,7 +19,7 @@ from typing import Dict, Any
 import numpy as np
 
 from .circuits import real_amplitudes_ansatz, hardware_efficient_ansatz, single_qubit_rotation
-from .observables import vqe_h2_hamiltonian, qaoa_maxcut_hamiltonian, bloch_state_fit_target
+from .observables import Hamiltonian, vqe_h2_hamiltonian, qaoa_maxcut_hamiltonian, bloch_state_fit_target
 
 
 # ── Preset: VQE H₂ ──────────────────────────────────────────────────────────
@@ -51,7 +51,7 @@ def vqe_h2_preset(seed: int = 42) -> Dict[str, Any]:
 
 # ── Preset: QAOA MaxCut ─────────────────────────────────────────────────────
 def qaoa_maxcut_preset(seed: int = 42) -> Dict[str, Any]:
-    """Hardware-efficient ansatz on a 4-cycle MaxCut Hamiltonian.
+    """Hardware-efficient ansatz minimizing the negative 4-cycle cut score.
 
     Optimizer: Adam(lr=0.05), 40 iterations.
     """
@@ -61,7 +61,9 @@ def qaoa_maxcut_preset(seed: int = 42) -> Dict[str, Any]:
     rng = np.random.default_rng(seed)
     init_params = rng.uniform(-np.pi, np.pi, size=num_params)
     edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
-    observable = qaoa_maxcut_hamiltonian(edges=edges, num_qubits=num_qubits)
+    cost = qaoa_maxcut_hamiltonian(edges=edges, num_qubits=num_qubits)
+    # train() performs gradient descent; MaxCut's score must be maximized.
+    observable = Hamiltonian.from_terms(cost.num_qubits, [(-coeff, label) for coeff, label in cost.terms])
 
     return {
         "ansatz_name": "hardware_efficient",
