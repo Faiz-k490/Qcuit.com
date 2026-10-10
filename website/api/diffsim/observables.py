@@ -174,8 +174,8 @@ def qaoa_maxcut_hamiltonian(edges: Iterable[Tuple[int, int]] | None = None,
         s[i] = "Z"
         s[j] = "Z"
         terms.append((-0.5, "".join(s)))
-    # Constant offset (number of edges * 0.5) — kept off so optimisers see
-    # a clean min at -|E|/2 (max cut).
+    # The omitted |E|/2 offset does not affect which state maximizes the cut.
+    # A gradient-descent trainer must minimize the negative of this score.
     return Hamiltonian(num_qubits=n, terms=terms)
 
 
