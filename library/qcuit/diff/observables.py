@@ -39,7 +39,11 @@ class Hamiltonian:
 
     @classmethod
     def from_string(cls, expr: str, num_qubits: int | None = None) -> "Hamiltonian":
-        """Parse expressions like ``0.5 Z0 Z1 + 0.3 X0 - 0.1 Y2``."""
+        """Parse indexed Paulis, with qubit 0 in the rightmost tensor factor.
+
+        For example, ``Z0`` on two qubits is the Pauli label ``IZ``, matching
+        the least-significant-bit convention used by the circuit gates.
+        """
         normalised = re.sub(r"\s*-\s*", " + -", expr.strip())
         if normalised.startswith("+"):
             normalised = normalised[1:].strip()
@@ -76,7 +80,7 @@ class Hamiltonian:
             for op, idx in ops:
                 if idx >= n:
                     raise ValueError(f"Qubit index {idx} >= num_qubits {n}")
-                full[idx] = op
+                full[n - 1 - idx] = op
             terms.append((coeff, "".join(full)))
         return cls(num_qubits=n, terms=terms)
 
@@ -130,8 +134,8 @@ def qaoa_maxcut_hamiltonian(
     terms: List[PauliTerm] = []
     for i, j in edge_list:
         paulis = ["I"] * n
-        paulis[i] = "Z"
-        paulis[j] = "Z"
+        paulis[n - 1 - i] = "Z"
+        paulis[n - 1 - j] = "Z"
         terms.append((-0.5, "".join(paulis)))
     return Hamiltonian(num_qubits=n, terms=terms)
 

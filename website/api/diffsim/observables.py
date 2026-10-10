@@ -59,7 +59,8 @@ class Hamiltonian:
     def from_string(cls, expr: str, num_qubits: int | None = None) -> "Hamiltonian":
         """Parse strings like ``0.5 Z0 Z1 + 0.3 X0 - 0.1 Y2``.
 
-        Whitespace is flexible; coefficients default to 1.0.
+        Whitespace is flexible; coefficients default to 1.0. Qubit 0 is the
+        least-significant statevector bit and the rightmost Pauli character.
         """
         # Normalise: turn '-' into '+ -' so we can split on '+'.
         normalised = re.sub(r"\s*-\s*", " + -", expr.strip())
@@ -99,7 +100,7 @@ class Hamiltonian:
             for op, idx in ops:
                 if idx >= n:
                     raise ValueError(f"Qubit index {idx} >= num_qubits {n}")
-                full[idx] = op
+                full[n - 1 - idx] = op
             terms.append((coeff, "".join(full)))
         return cls(num_qubits=n, terms=terms)
 
@@ -171,8 +172,8 @@ def qaoa_maxcut_hamiltonian(edges: Iterable[Tuple[int, int]] | None = None,
     terms: List[PauliTerm] = []
     for i, j in edge_list:
         s = ["I"] * n
-        s[i] = "Z"
-        s[j] = "Z"
+        s[n - 1 - i] = "Z"
+        s[n - 1 - j] = "Z"
         terms.append((-0.5, "".join(s)))
     # Constant offset (number of edges * 0.5) — kept off so optimisers see
     # a clean min at -|E|/2 (max cut).
